@@ -2,6 +2,7 @@
 # Programma per seguire e salvare i progressi nel raggiungimento di un obiettivo il cui valore possa essere espresso in numeri
 # Precedentemente: dieta 1.6.4
 # Nuovo nome by Ginny & Manu & me
+# 28 giugno 2024, spostato su GitHub
 
 #Qimport
 from GBUtils import dgt, key
