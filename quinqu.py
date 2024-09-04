@@ -10,7 +10,7 @@ import datetime as dt
 import pickle, fractions, statistics
 
 #QConstants
-VERSIONE="2.0.2 del 1 agosto 2024"
+VERSIONE="2.0.3 del 4 settembre 2024"
 RECORDNAME="quinqu.db"
 
 #QVariables
@@ -199,7 +199,7 @@ def Cambiafine(datafine):
 	'''Cambia la data di fine progetto'''
 	print(f"\nVecchia data di fine progetto: {Humanize(datafine)}.\nNuova data di fine progetto...")
 	minuto, ora, giorno, mese, anno = DigitaData()
-	datafine=dt.datetime(minute=minuto, hour=ora, day=giorno, month=mese, anno=anno)
+	datafine = dt.datetime(year=anno, month=mese, day=giorno, hour=ora, minute=minuto)
 	return datafine
 
 def VConfronto(valori,datainizio,datafine,obiettivo):
