@@ -10,7 +10,7 @@ import datetime as dt
 import pickle, fractions, statistics
 
 #QConstants
-VERSIONE="2.0.3 del 4 settembre 2024"
+VERSIONE="2.0.4 del 10 settembre 2024"
 RECORDNAME="quinqu.db"
 
 #QVariables
@@ -214,7 +214,7 @@ def VConfronto(valori,datainizio,datafine,obiettivo):
 	if ot>op-10.0 and ot<op+10.0: oa="progressione uniforme, molto bene!"
 	elif ot<op-10.0: oa="variazione del valore troppo rapida, rallentare"
 	elif ot>op+10.0: oa="variazione del valore troppo lenta, accelerare"
-	print(f"\nProgressi: tempo {ot:+.2f}% valore {op:+.2f}% ({od:+.2f}% {oa}")
+	print(f"\nProgressi: tempo {ot:+.2f}% valore {op:+.2f}% (T={od:+.2f}% {oa}")
 	return
 
 def ConcludiProgetto():
