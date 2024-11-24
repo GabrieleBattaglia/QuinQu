@@ -78,7 +78,6 @@ def VPTempo(valori,datainizio,datafine,obiettivo, show=False):
 	percentuale_tempo=(oggi1-d1)*100/(d2-d1)
 	if show: print(f"Oggi è il {Humanize(oggi)}, giorno {(oggi-datainizio).days} di {durata.days}. Sei al {percentuale_tempo:+.2f}%, in frazione: {fractions.Fraction((oggi-datainizio).days, durata.days)}\n\tdel periodo di tempo impostato.")
 	return percentuale_tempo
-
 def VPObiettivo(valori, datainizio,datafine,obiettivo, show=False):
 	'''Progressi rispetto all'obiettivo'''
 	if show: print("\nProgressi ottenuti rispetto all'obiettivo prefissato:")
