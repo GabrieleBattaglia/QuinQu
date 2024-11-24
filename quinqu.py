@@ -10,7 +10,7 @@ import datetime as dt
 import pickle, fractions, statistics
 
 #QConstants
-VERSIONE="2.0.4 del 10 settembre 2024"
+VERSIONE="2.0.5 del 24 novembre 2024"
 RECORDNAME="quinqu.db"
 
 #QVariables
