@@ -10,7 +10,7 @@ import datetime as dt
 import pickle, fractions, statistics
 
 #QConstants
-VERSIONE="2.0.6 del 4 gennaio 2025"
+VERSIONE="2.0.5 del 24 novembre 2024"
 RECORDNAME="quinqu.db"
 
 #QVariables
@@ -227,12 +227,11 @@ def ConcludiProgetto():
 	percentuale_tempo = (oggi.timestamp() - datainizio.timestamp()) * 100 / (datafine.timestamp() - datainizio.timestamp())
 	
 	# Determinazione dello stato del progetto
-	if percentuale_obiettivo >= 100:
+	if valoreattuale >= obiettivo:
 		stato_progetto = f"Obbiettivo raggiunto nel {percentuale_tempo:.2f}% del tempo a disposizione"
-	elif percentuale_tempo >= 100:
-		stato_progetto = f"Tempo scaduto: raggiunto il {percentuale_obiettivo:.2f}% dell'obbiettivo"
 	else:
-		stato_progetto = f"Progetto in corso: raggiunto il {percentuale_obiettivo:.2f}% dell'obbiettivo nel {percentuale_tempo:.2f}% del tempo"
+		percentuale_mancante = 100 - percentuale_obiettivo
+		stato_progetto = f"Obbiettivo mancato: {percentuale_mancante:.2f}% al raggiungimento dell'obbiettivo"
 	with open(f"Quinqu-{prjnome}.txt", "w", encoding="utf-8") as f:
 		f.write(f"Nome del progetto: {prjnome}\n")
 		f.write(f"Descrizione: {prjdesc}\n")
