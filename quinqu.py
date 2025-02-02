@@ -10,7 +10,7 @@ import datetime as dt
 import pickle, fractions, statistics
 
 #QConstants
-VERSIONE="2.0.6 del 4 gennaio 2025"
+VERSIONE="2.0.7 del 5 febbraio 2025"
 RECORDNAME="quinqu.db"
 
 #QVariables
@@ -129,7 +129,7 @@ def Cancelladato(p):
 
 def Nuovodato(p):
 	'''aggiunge un record a valori'''
-	valore=dgt(prompt="\nInserisci il valore da registrare:> ", kind="f", fmin=0.0, fmax=1000.0)
+	valore=dgt(prompt="\nInserisci il valore da registrare:> ", kind="f")
 	listavalori=list(p.values())
 	if valore>max(listavalori): r=f"Nuovo record: {valore:+.2f} supera di {valore-max(listavalori):+.2f} rispetto al massimo {max(listavalori):+.2f}."
 	elif valore<min(listavalori): r=f"Nuovo record: {valore:+.2f} è inferiore di {valore-min(listavalori):+.2f} rispetto al minimo {min(listavalori):+.2f}."
