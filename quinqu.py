@@ -5,13 +5,16 @@
 # 28 giugno 2024, spostato su GitHub
 
 #Qimport
-from GBUtils import dgt, key
+from GBUtils import dgt, key, Acusticator
 import datetime as dt
 import pickle, fractions, statistics
 
 #QConstants
-VERSIONE="2.0.7 del 5 febbraio 2025"
+VERSIONE="3.0 del 2 febbraio 2025"
 RECORDNAME="quinqu.db"
+suono={
+							"dato":["c5",.2,0,.4,"e5",.2,0,.4,"g5",.2,0,.4]
+							}
 
 #QVariables
 menu={"N":"Nuova registrazione del valore",
@@ -130,6 +133,7 @@ def Cancelladato(p):
 def Nuovodato(p):
 	'''aggiunge un record a valori'''
 	valore=dgt(prompt="\nInserisci il valore da registrare:> ", kind="f")
+	Acusticator(suono["dato"],kind=3)
 	listavalori=list(p.values())
 	if valore>max(listavalori): r=f"Nuovo record: {valore:+.2f} supera di {valore-max(listavalori):+.2f} rispetto al massimo {max(listavalori):+.2f}."
 	elif valore<min(listavalori): r=f"Nuovo record: {valore:+.2f} è inferiore di {valore-min(listavalori):+.2f} rispetto al minimo {min(listavalori):+.2f}."
