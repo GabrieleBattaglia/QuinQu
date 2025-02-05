@@ -10,10 +10,13 @@ import datetime as dt
 import pickle, fractions, statistics
 
 #QConstants
-VERSIONE="3.0 del 2 febbraio 2025"
+VERSIONE="3.0.2 del 4 febbraio 2025"
 RECORDNAME="quinqu.db"
-suono={
-							"dato":["c5",.2,0,.4,"e5",.2,0,.4,"g5",.2,0,.4]
+SUONO={
+							"dato":["a5",.070,0,.4,"c6",.070,0,.4,"g6",.150,0,.4],
+							"sopra":['e4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'b4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4],
+							"mezzo":['g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4,'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4,'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4],
+							"sotto":['b4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4,'e4', 0.035, 0, 0.4]
 							}
 
 #QVariables
@@ -133,11 +136,17 @@ def Cancelladato(p):
 def Nuovodato(p):
 	'''aggiunge un record a valori'''
 	valore=dgt(prompt="\nInserisci il valore da registrare:> ", kind="f")
-	Acusticator(suono["dato"],kind=3)
+	Acusticator(SUONO["dato"],kind=1, sync=True)
 	listavalori=list(p.values())
-	if valore>max(listavalori): r=f"Nuovo record: {valore:+.2f} supera di {valore-max(listavalori):+.2f} rispetto al massimo {max(listavalori):+.2f}."
-	elif valore<min(listavalori): r=f"Nuovo record: {valore:+.2f} è inferiore di {valore-min(listavalori):+.2f} rispetto al minimo {min(listavalori):+.2f}."
-	else: r=f"Nuovo record nell'intervallo fra minimo {min(listavalori):+.2f} < {valore-min(listavalori):+.2f} < {valore:+.2f} > {valore-max(listavalori):+.2f} > {max(listavalori):+.2f}."
+	if valore>max(listavalori):
+		Acusticator(SUONO["sopra"],kind=1, sync=False)
+		r=f"Nuovo record: {valore:+.2f} supera di {valore-max(listavalori):+.2f} rispetto al massimo {max(listavalori):+.2f}."
+	elif valore<min(listavalori):
+		Acusticator(SUONO["sotto"],kind=1, sync=False)
+		r=f"Nuovo record: {valore:+.2f} è inferiore di {valore-min(listavalori):+.2f} rispetto al minimo {min(listavalori):+.2f}."
+	else:
+		Acusticator(SUONO["mezzo"],kind=1, sync=False)
+		r=f"Nuovo record nell'intervallo fra minimo {min(listavalori):+.2f} < {valore-min(listavalori):+.2f} < {valore:+.2f} > {valore-max(listavalori):+.2f} > {max(listavalori):+.2f}."
 	print(r)
 	adesso=dt.datetime.now().replace(microsecond=0)
 	p[adesso]=valore
