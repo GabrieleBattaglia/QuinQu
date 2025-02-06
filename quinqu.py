@@ -10,7 +10,7 @@ import datetime as dt
 import pickle, fractions, statistics
 
 #QConstants
-VERSIONE="3.0.2 del 4 febbraio 2025"
+VERSIONE="3.0.3 del 4 febbraio 2025"
 RECORDNAME="quinqu.db"
 SUONO={
 							"dato":["a5",.070,0,.4,"c6",.070,0,.4,"g6",.150,0,.4],
@@ -71,9 +71,19 @@ def Infostatistiche(valori):
 	return
 
 def Humanize(d):
-	'''Normalizza la data per una visualizzazione più comoda'''
-	return f"{d.day}/{d.month}/{d.year} {d.hour}:{d.minute}"
-
+	"""Normalizza la data per una visualizzazione più comoda in italiano."""
+	giorni = [
+        "lunedì", "martedì", "mercoledì",
+        "giovedì", "venerdì", "sabato", "domenica"
+  ]
+	mesi = [
+        "gennaio", "febbraio", "marzo", "aprile",
+        "maggio", "giugno", "luglio", "agosto",
+        "settembre", "ottobre", "novembre", "dicembre"
+    ]
+	giorno_settimana = giorni[d.weekday()]  # weekday() restituisce 0 per lunedì, 6 per domenica
+	mese = mesi[d.month - 1]                # indice dei mesi parte da 0
+	return f"{giorno_settimana} {d.day} {mese} {d.year}, ore {d.hour:02d}:{d.minute:02d}"
 def VPTempo(valori,datainizio,datafine,obiettivo, show=False):
 	'''Visualizza progressi sulla linea temporale'''
 	if show: print("\nProgressi sulla linea temporale del tuo progetto di controllo del valore.")
@@ -238,7 +248,6 @@ def ConcludiProgetto():
 	percentuale_obiettivo = (valoreattuale-valoreiniziale) * 100 / (obiettivo-valoreiniziale)
 	oggi = dt.datetime.now()
 	percentuale_tempo = (oggi.timestamp() - datainizio.timestamp()) * 100 / (datafine.timestamp() - datainizio.timestamp())
-	
 	# Determinazione dello stato del progetto
 	if percentuale_obiettivo >= 100:
 		stato_progetto = f"Obbiettivo raggiunto nel {percentuale_tempo:.2f}% del tempo a disposizione"
