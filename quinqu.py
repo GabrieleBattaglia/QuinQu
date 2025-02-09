@@ -10,7 +10,7 @@ import datetime as dt
 import pickle, fractions, statistics
 
 #QConstants
-VERSIONE="3.0.3 del 4 febbraio 2025"
+VERSIONE="3.0.4 del 9 febbraio 2025"
 RECORDNAME="quinqu.db"
 SUONO={
 							"dato":["a5",.070,0,.4,"c6",.070,0,.4,"g6",.150,0,.4],
@@ -111,7 +111,7 @@ def VRegistro(p):
 	contatore=1; differenza=0.0
 	for k,v in p.items():
 		k1=Humanize(k)
-		print(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - del {k1}.")
+		print(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - di {k1}.")
 		contatore+=1
 		differenza=v
 	print(f"Totale {len(p)} records registrati.")
@@ -267,7 +267,7 @@ def ConcludiProgetto():
 		contatore=1; differenza=0.0
 		for k,v in valori.items():
 			k1=Humanize(k)
-			f.write(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - del {k1}.\n")
+			f.write(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - di {k1}.\n")
 			contatore+=1
 			differenza=v
 		from io import StringIO
