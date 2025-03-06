@@ -1,0 +1,35 @@
+Nome del progetto: Vado Al Record
+Descrizione: Raggiungere il mio record post dieta
+Data inizio: giovedì 6 febbraio 2025, ore 23:44
+Data fine: domenica 16 febbraio 2025, ore 23:44
+Valore iniziale: +87.50
+Valore obiettivo: +85.27
+Tempo scaduto: raggiunto il -39.46% dell'obbiettivo
+
+Registro dei valori:
+(1) - +87.50, (+87.50) - di giovedì 6 febbraio 2025, ore 23:44.
+(2) - +88.09, (+0.59) - di venerdì 7 febbraio 2025, ore 07:43.
+(3) - +87.92, (-0.17) - di sabato 8 febbraio 2025, ore 16:15.
+(4) - +87.78, (-0.14) - di domenica 9 febbraio 2025, ore 14:28.
+(5) - +87.48, (-0.30) - di lunedì 10 febbraio 2025, ore 10:13.
+(6) - +86.74, (-0.74) - di martedì 11 febbraio 2025, ore 16:42.
+(7) - +87.53, (+0.79) - di mercoledì 12 febbraio 2025, ore 12:01.
+(8) - +87.64, (+0.11) - di giovedì 13 febbraio 2025, ore 07:53.
+(9) - +87.80, (+0.16) - di venerdì 14 febbraio 2025, ore 10:10.
+(10) - +88.23, (+0.43) - di sabato 15 febbraio 2025, ore 08:54.
+(11) - +88.38, (+0.15) - di domenica 16 febbraio 2025, ore 11:03.
+
+Informazioni statistiche sui valori registrati.
+Numero di records: 11
+Il valore massimo è +88.38 e compare 1 volte.
+	Data: domenica 16 febbraio 2025, ore 11:03;
+Il valore minimo è +86.74 e compare 1 volte.
+	Data: martedì 11 febbraio 2025, ore 16:42;
+Media aritmetica dei valori: +87.74.
+Mediane: bassa +87.78, media +87.78, alta +87.78.
+Moda: +87.50.
+Deviazione standard: +0.45.
+Varianza: +0.20.
+
+Report prodotto il giovedì 6 marzo 2025, ore 07:07
+Applicazione: Quanto In Quanto (Quinqu) versione 3.0.4 del 9 febbraio 2025
