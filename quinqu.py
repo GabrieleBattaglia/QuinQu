@@ -1,342 +1,545 @@
 # Quanto in Quanto (Quinqu). Data di concepimento 10/02/2024.
 # Programma per seguire e salvare i progressi nel raggiungimento di un obiettivo il cui valore possa essere espresso in numeri
-# Precedentemente: dieta 1.6.4
-# Nuovo nome by Ginny & Manu & me
-# 28 giugno 2024, spostato su GitHub
 
-#Qimport
-from GBUtils import dgt, key, Acusticator
+import os
+import sys
+import pickle
+import fractions
+import statistics
 import datetime as dt
-import pickle, fractions, statistics
+from GBUtils import dgt, key, Acusticator, sonify
 
-#QConstants
-VERSIONE="3.0.4 del 9 febbraio 2025"
-RECORDNAME="quinqu.db"
-SUONO={
-							"dato":["a5",.070,0,.4,"c6",.070,0,.4,"g6",.150,0,.4],
-							"sopra":['e4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'b4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4],
-							"mezzo":['g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4,'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4,'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4],
-							"sotto":['b4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4,'e4', 0.035, 0, 0.4]
-							}
+VERSIONE = "3.2.0 del 28 febbraio 2026"
+AUTORE = "Gabriele"
+RECORDNAME = "quinqu.db"
 
-#QVariables
-menu={"N":"Nuova registrazione del valore",
-						"C":"Cancella un valore",
-						"F":"Modifica la data di fine progetto",
-						"O":"Modifica l'obiettivo",
-						"R":"Mostra il registro",
-						"B":"Vedi il progresso rispetto all'obiettivo",
-						"T":"Vedi il progresso rispetto al tempo",
-						"A":"Confronta tempo e obiettivo",
-						"I":"Informazioni statistiche",
-						"S":"Salva il registro",
-						"M":"Mostra il menù",
-						"Q":"Elimina definitivamente tutti i dati",
-						"E":"Esci dall'App"}
-menuchiavi=''
-for k in menu.keys():
-	menuchiavi+=str(k).lower()+"."
+SUONO = {
+    "dato": ["a5", .070, 0, .4, "c6", .070, 0, .4, "g6", .150, 0, .4],
+    "sopra": ['e4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'b4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4],
+    "mezzo": ['g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4],
+    "sotto": ['b4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'e4', 0.035, 0, 0.4],
+    "startup": ["c5", 0.1, 0, 0.4, "e5", 0.1, 0, 0.4, "g5", 0.1, 0, 0.4, "c6", 0.3, 0, 0.4],
+    "shutdown": ["c6", 0.1, 0, 0.4, "g5", 0.1, 0, 0.4, "e5", 0.1, 0, 0.4, "c5", 0.3, 0, 0.4],
+    "save": ["g5", 0.05, 0, 0.4, "b5", 0.1, 0, 0.4],
+    "delete": ["e4", 0.1, 0, 0.4, "c4", 0.2, 0, 0.4],
+    "reset": ["c4", 0.1, 0, 0.4, "c3", 0.4, 0, 0.4],
+    "concluso": ["c5", 0.15, 0, 0.4, "e5", 0.15, 0, 0.4, "g5", 0.15, 0, 0.4, "c6", 0.15, 0, 0.4, "e6", 0.15, 0, 0.4, "g6", 0.4, 0, 0.4]
+}
 
-#QFunctions
-def Reset(prjnome,prjdesc,valori,datainizio,datafine,obiettivo):
-	'''Inizializza tutti i dati'''
-	attesa=dgt(prompt="ATTENZIONE! Sei sicuro di voler cancellare tutto?\n\tL'operazione è irreversibile! Digita 'sicuro'> ",kind="s",smin=0,smax=12,default="n")
-	if attesa == "sicuro":
-		prjnome,prjdesc,valori,datainizio,datafine,obiettivo=Inizializzazione()
-	else: print("Non tocco nulla.")
-	return prjnome,prjdesc,valori,datainizio,datafine,obiettivo
-def Infostatistiche(valori):
-	if len(valori)<4:
-		print("Sono stati registrati pochi valori per mostrare le statistiche.")
-		return
-	print("\nInformazioni statistiche sui valori registrati.")
-	l=list(valori.values())
-	print("Numero di records:",len(l))
-	piupiccolo=min(l); piugrande=max(l)
-	listapiccoli, listagrandi = [], []
-	for k, v in valori.items():
-		if v==piugrande: listagrandi.append(k)
-		if v==piupiccolo: listapiccoli.append(k)
-	print(f"Il valore massimo è {piugrande:+.2f} e compare {len(listagrandi)} volte.")
-	for j in listagrandi:
-		print(f"\tData: {Humanize(j)};")
-	print(f"Il valore minimo è {piupiccolo:+.2f} e compare {len(listapiccoli)} volte.")
-	for j in listapiccoli:
-		print(f"\tData: {Humanize(j)};")
-	print(f"Media aritmetica dei valori: {statistics.fmean(l):+.2f}.")
-	print(f"Mediane: bassa {statistics.median_low(l):+.2f}, media {statistics.median(l):+.2f}, alta {statistics.median_high(l):+.2f}.")
-	print(f"Moda: {statistics.mode(l):+.2f}.")
-	print(f"Deviazione standard: {statistics.stdev(l):+.2f}.")
-	print(f"Varianza: {statistics.variance(l):+.2f}.")
-	return
+menu = {
+    "n": "Nuova registrazione del valore",
+    "c": "Cancella un valore",
+    "f": "Modifica la data di fine progetto",
+    "o": "Modifica l'obiettivo",
+    "r": "Mostra il registro",
+    "p": "Ascolta l'andamento dei valori (sonify)",
+    "b": "Vedi il progresso rispetto all'obiettivo",
+    "t": "Vedi il progresso rispetto al tempo",
+    "a": "Confronta tempo e obiettivo",
+    "i": "Informazioni statistiche",
+    "s": "Salva il registro",
+    "m": "Mostra il menù",
+    "q": "Elimina definitivamente tutti i dati",
+    "e": "Esci dall'App"
+}
+menuchiavi = "".join([k + "." for k in menu.keys()])
 
-def Humanize(d):
-	"""Normalizza la data per una visualizzazione più comoda in italiano."""
-	giorni = [
-        "lunedì", "martedì", "mercoledì",
-        "giovedì", "venerdì", "sabato", "domenica"
-  ]
-	mesi = [
-        "gennaio", "febbraio", "marzo", "aprile",
-        "maggio", "giugno", "luglio", "agosto",
-        "settembre", "ottobre", "novembre", "dicembre"
-    ]
-	giorno_settimana = giorni[d.weekday()]  # weekday() restituisce 0 per lunedì, 6 per domenica
-	mese = mesi[d.month - 1]                # indice dei mesi parte da 0
-	return f"{giorno_settimana} {d.day} {mese} {d.year}, ore {d.hour:02d}:{d.minute:02d}"
-def VPTempo(valori,datainizio,datafine,obiettivo, show=False):
-	'''Visualizza progressi sulla linea temporale'''
-	if show: print("\nProgressi sulla linea temporale del tuo progetto di controllo del valore.")
-	durata=datafine-datainizio
-	if show: print(f"Progetto iniziato in data {Humanize(datainizio)} terminerà il {Humanize(datafine)}, per un totale di {durata.days} giorni")
-	oggi=dt.datetime.now().replace(microsecond=0)
-	oggi1=oggi.timestamp(); d1=datainizio.timestamp(); d2=datafine.timestamp()
-	percentuale_tempo=(oggi1-d1)*100/(d2-d1)
-	if show: print(f"Oggi è il {Humanize(oggi)}, giorno {(oggi-datainizio).days} di {durata.days}. Sei al {percentuale_tempo:+.2f}%, in frazione: {fractions.Fraction((oggi-datainizio).days, durata.days)}\n\tdel periodo di tempo impostato.")
-	return percentuale_tempo
-def VPObiettivo(valori, datainizio,datafine,obiettivo, show=False):
-	'''Progressi rispetto all'obiettivo'''
-	if show: print("\nProgressi ottenuti rispetto all'obiettivo prefissato:")
-	valoreiniziale=valori[datainizio]
-	valoreattuale=valori[list(valori.keys())[-1]]
-	percentuale_obiettivo=(valoreattuale-valoreiniziale)*100/(obiettivo-valoreiniziale)
-	if show: print(f"Valore iniziale {valoreiniziale:+.2f}, attuale {valoreattuale:+.2f}, obiettivo {obiettivo:+.2f} = ({obiettivo-valoreiniziale:+.2f}).")
-	if show: print(f"Ottenuto {valoreattuale-valoreiniziale:+.2f} pari al {percentuale_obiettivo:+.2f}%, in frazione: {fractions.Fraction(int(valoreattuale-valoreiniziale), int(obiettivo-valoreiniziale))}")
-	if show: print(f"Da fare {obiettivo-valoreattuale:+.2f} pari al {(obiettivo-valoreattuale)*100/(obiettivo-valoreiniziale):+.2f}%")
-	return percentuale_obiettivo
+def Salva(stato):
+    try:
+        with open(RECORDNAME, "wb") as f:
+            pickle.dump(stato, f, pickle.HIGHEST_PROTOCOL)
+        Acusticator(SUONO["save"], kind=1, sync=False)
+        print(f"\n{RECORDNAME} salvato.")
+    except Exception as e:
+        print(f"Errore durante il salvataggio: {e}")
 
-def VRegistro(p):
-	'''Visualizza il db'''
-	print("\nDati presenti nel registro dei valori:")
-	contatore=1; differenza=0.0
-	for k,v in p.items():
-		k1=Humanize(k)
-		print(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - di {k1}.")
-		contatore+=1
-		differenza=v
-	print(f"Totale {len(p)} records registrati.")
-	return
-
-def Cancelladato(p):
-	'''cancella un record da valori'''
-	valore=dgt(prompt="\nInserisci il valore che vuoi cancellare:> ", kind="f", fmin=0.0, fmax=1000.0)
-	ricerca=[]
-	for k,v in valori.items():
-		if valore==v: ricerca.append(k)
-	if len(ricerca)==0:
-		print("Non è stato trovato il valore specificato all'interno del registro")
-		return p
-	elif len(ricerca)==1:
-		print(f"Trovato il valore {valore}, registrato in data: {Humanize(ricerca[0])}.")
-		del p[ricerca[0]]
-		print(f"Dato eliminato, ora il registro contiene {len(p)} records")
-		return p
-	print(f"Sono stati trovati {len(ricerca)} nel registro.\nDigita il numero di quello che vuoi eliminare.")
-	multi={}
-	contatore=1
-	for j in ricerca:
-		print(f"({contatore}) - in data - {str(j)};")
-		multi[contatore]=j
-		contatore+=1
-	scelta=dgt(prompt="Elemento da cancellare?> ",kind="i", imin=1,imax=len(multi))
-	del p[multi[scelta]]
-	print(f"Dato eliminato. Ora il registro contiene {len(p)} records.")
-	return p
-
-def Nuovodato(p):
-	'''aggiunge un record a valori'''
-	valore=dgt(prompt="\nInserisci il valore da registrare:> ", kind="f")
-	Acusticator(SUONO["dato"],kind=1, sync=True)
-	listavalori=list(p.values())
-	if valore>max(listavalori):
-		Acusticator(SUONO["sopra"],kind=1, sync=False)
-		r=f"Nuovo record: {valore:+.2f} supera di {valore-max(listavalori):+.2f} rispetto al massimo {max(listavalori):+.2f}."
-	elif valore<min(listavalori):
-		Acusticator(SUONO["sotto"],kind=1, sync=False)
-		r=f"Nuovo record: {valore:+.2f} è inferiore di {valore-min(listavalori):+.2f} rispetto al minimo {min(listavalori):+.2f}."
-	else:
-		Acusticator(SUONO["mezzo"],kind=1, sync=False)
-		r=f"Nuovo record nell'intervallo fra minimo {min(listavalori):+.2f} < {valore-min(listavalori):+.2f} < {valore:+.2f} > {valore-max(listavalori):+.2f} > {max(listavalori):+.2f}."
-	print(r)
-	adesso=dt.datetime.now().replace(microsecond=0)
-	p[adesso]=valore
-	print(f"Fatto. Ora il registro contiene {len(p)} records.")
-	percentuale_obiettivo = VPObiettivo(p, datainizio, datafine, obiettivo)
-	percentuale_tempo = VPTempo(p, datainizio, datafine, obiettivo)
-	if percentuale_obiettivo >= 100 or percentuale_tempo >= 100:
-		ConcludiProgetto()
-	return p
-
-def VMenu():
-	'''Mostra il menù dell'app'''
-	print(f"\nMenù di QUINQU, versione {VERSIONE}.")
-	for k, v in menu.items():
-		print(f"---( {k} ) - -> {v};")
-	return
-
-def Salva():
-	f=open(RECORDNAME,"wb")
-	pickle.dump(prjnome, f, pickle.HIGHEST_PROTOCOL)
-	pickle.dump(prjdesc, f, pickle.HIGHEST_PROTOCOL)
-	pickle.dump(datainizio, f, pickle.HIGHEST_PROTOCOL)
-	pickle.dump(datafine, f, pickle.HIGHEST_PROTOCOL)
-	pickle.dump(valori, f, pickle.HIGHEST_PROTOCOL)
-	pickle.dump(obiettivo, f, pickle.HIGHEST_PROTOCOL)
-	f.close()
-	print(f"\n{RECORDNAME} salvato.")
-	return
+def Carica():
+    try:
+        with open(RECORDNAME, "rb") as f:
+            dati = pickle.load(f)
+            # Retrocompatibilità con la vecchia versione (6 variabili salvate in sequenza)
+            if not isinstance(dati, dict):
+                prjnome = dati
+                prjdesc = pickle.load(f)
+                datainizio = pickle.load(f)
+                datafine = pickle.load(f)
+                valori = pickle.load(f)
+                obiettivo = pickle.load(f)
+                stato = {
+                    "prjnome": prjnome,
+                    "prjdesc": prjdesc,
+                    "datainizio": datainizio,
+                    "datafine": datafine,
+                    "valori": valori,
+                    "obiettivo": obiettivo
+                }
+                # Riscriviamo il DB nel nuovo formato atomico
+                Salva(stato)
+                return stato
+            return dati
+    except (IOError, EOFError):
+        return None
 
 def DigitaData():
-	'''Restituisce 5 valori con cui settare un oggetto datetime.date()'''
-	oggi=dt.datetime.now().replace(microsecond=0)
-	anno=dgt(prompt=f"\nAnno? invio={oggi.year}> ",kind="i",imin=1970,imax=2500, default=oggi.year)
-	mese=dgt(prompt=f"Mese? invio={oggi.month}> ",kind="i",imin=1,imax=12, default=oggi.month)
-	if mese in [1,3,5,7,8,10,12]: maxgiorno=31
-	elif mese in [4,6,9,11]: maxgiorno=30
-	else: maxgiorno=29
-	giorno=dgt(prompt=f"Giorno? invio={oggi.day}, max={maxgiorno}> ",kind="i",imin=1,imax=maxgiorno, default=oggi.day)
-	ora=dgt(prompt=f"A che ora? invio={oggi.hour}> ",kind="i",imin=0,imax=23, default=oggi.hour)
-	minuto=dgt(prompt=f"Minuti? invio={oggi.minute}> ",kind="i",imin=0,imax=59, default=oggi.minute)
-	print("Grazie")
-	return minuto, ora, giorno,mese,anno
+    oggi = dt.datetime.now().replace(microsecond=0)
+    anno = dgt(prompt=f"\nAnno? invio={oggi.year}> ", kind="i", imin=1970, imax=2500, default=oggi.year)
+    mese = dgt(prompt=f"Mese? invio={oggi.month}> ", kind="i", imin=1, imax=12, default=oggi.month)
+    
+    # Calcolo esatto dei giorni per gestire anni bisestili e mesi
+    if mese in [1, 3, 5, 7, 8, 10, 12]:
+        maxgiorno = 31
+    elif mese in [4, 6, 9, 11]:
+        maxgiorno = 30
+    else:
+        # Anno bisestile
+        if (anno % 4 == 0 and anno % 100 != 0) or (anno % 400 == 0):
+            maxgiorno = 29
+        else:
+            maxgiorno = 28
+            
+    giorno = dgt(prompt=f"Giorno? invio={oggi.day}, max={maxgiorno}> ", kind="i", imin=1, imax=maxgiorno, default=oggi.day)
+    ora = dgt(prompt=f"A che ora? invio={oggi.hour}> ", kind="i", imin=0, imax=23, default=oggi.hour)
+    minuto = dgt(prompt=f"Minuti? invio={oggi.minute}> ", kind="i", imin=0, imax=59, default=oggi.minute)
+    print("Grazie")
+    return dt.datetime(year=anno, month=mese, day=giorno, hour=ora, minute=minuto)
 
 def Inizializzazione():
-	'''Inizializza e restituisce i 6 dati fondamentali'''
-	print(f"{RECORDNAME} non trovato. Apertura nuova registrazione.")
-	prjnome=dgt(prompt="Nome del progetto? ",kind="s", smin=5,smax=20).title()
-	prjdesc=dgt(prompt="Descrizione del progetto? ",kind="s", smin=0,smax=1024)
-	print("\nInserisci la data in cui inizia l'arco temporale.")
-	minuto, ora, giorno, mese, anno = DigitaData()
-	datainizio=dt.datetime(minute=minuto, hour=ora, day=giorno, month=mese, year=anno)
-	print("Molto bene, ora inserisci la data in cui prevedi di terminarlo.")
-	minuto, ora, giorno, mese, anno = DigitaData()
-	datafine=dt.datetime(minute=minuto, hour=ora, day=giorno, month=mese, year=anno)
-	valori={}
-	valore=dgt(prompt="Inserisci il valore di partenza:> ", kind="f", fmin=0.0, fmax=1000.0)
-	valori[datainizio]=valore
-	obiettivo=dgt(prompt="Inserisci l'obiettivo da raggiungere:> ", kind="f", fmin=0.0, fmax=1000.0)
-	return prjnome,prjdesc,valori,datainizio,datafine,obiettivo
+    print(f"{RECORDNAME} non trovato o dati cancellati. Apertura nuova registrazione.")
+    prjnome = dgt(prompt="Nome del progetto? ", kind="s", smin=5, smax=20).title()
+    prjdesc = dgt(prompt="Descrizione del progetto? ", kind="s", smin=0, smax=1024)
+    
+    print("\nInserisci la data in cui inizia l'arco temporale.")
+    datainizio = DigitaData()
+    
+    print("Molto bene, ora inserisci la data in cui prevedi di terminarlo.")
+    while True:
+        datafine = DigitaData()
+        if datafine > datainizio:
+            break
+        print("La data di fine deve essere successiva a quella di inizio. Riprova.")
+        
+    valore = dgt(prompt="Inserisci il valore di partenza:> ", kind="f", fmin=0.0, fmax=1000.0)
+    valori = {datainizio: valore}
+    
+    while True:
+        obiettivo = dgt(prompt="Inserisci l'obiettivo da raggiungere:> ", kind="f", fmin=0.0, fmax=1000.0)
+        if obiettivo != valore:
+            break
+        print("L'obiettivo non può essere uguale al valore di partenza. Riprova.")
+        
+    return {
+        "prjnome": prjnome,
+        "prjdesc": prjdesc,
+        "datainizio": datainizio,
+        "datafine": datafine,
+        "valori": valori,
+        "obiettivo": obiettivo
+    }
 
-def Cambiafine(datafine):
-	'''Cambia la data di fine progetto'''
-	print(f"\nVecchia data di fine progetto: {Humanize(datafine)}.\nNuova data di fine progetto...")
-	minuto, ora, giorno, mese, anno = DigitaData()
-	datafine = dt.datetime(year=anno, month=mese, day=giorno, hour=ora, minute=minuto)
-	return datafine
+def Reset(stato):
+    attesa = dgt(prompt="ATTENZIONE! Sei sicuro di voler cancellare tutto?\nL'operazione è irreversibile! Digita 'sicuro'> ", kind="s", smin=0, smax=12, default="n")
+    if attesa == "sicuro":
+        Acusticator(SUONO["reset"], kind=1, sync=False)
+        return Inizializzazione()
+    print("Non tocco nulla.")
+    return stato
 
-def VConfronto(valori,datainizio,datafine,obiettivo):
-	'''Mostra le percentuali di progresso'''
-	valoreiniziale=valori[datainizio]
-	valoreattuale=valori[list(valori.keys())[-1]]
-	op=(valoreattuale-valoreiniziale)*100/(obiettivo-valoreiniziale)
-	o=dt.datetime.now().replace(microsecond=0)
-	o1=o.timestamp(); d1=datainizio.timestamp(); d2=datafine.timestamp()
-	ot=(o1-d1)*100/(d2-d1)
-	od=ot-op
-	if ot>op-10.0 and ot<op+10.0: oa="progressione uniforme, molto bene!"
-	elif ot<op-10.0: oa="variazione del valore troppo rapida, rallentare"
-	elif ot>op+10.0: oa="variazione del valore troppo lenta, accelerare"
-	print(f"\nProgressi: tempo {ot:+.2f}% valore {op:+.2f}% (T={od:+.2f}% {oa}")
-	return
+def Humanize(d):
+    giorni = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
+    mesi = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
+    return f"{giorni[d.weekday()]} {d.day} {mesi[d.month - 1]} {d.year}, ore {d.hour:02d}:{d.minute:02d}"
 
-def ConcludiProgetto():
-	'''Dichiara il progetto concluso e salva il report finale'''
-	print("\nIl progetto è concluso. Creazione del report finale...")
-	# Calcolo delle percentuali di tempo e obiettivo raggiunto
-	valoreiniziale = valori[datainizio]
-	valoreattuale = valori[list(valori.keys())[-1]]
-	percentuale_obiettivo = (valoreattuale-valoreiniziale) * 100 / (obiettivo-valoreiniziale)
-	oggi = dt.datetime.now()
-	percentuale_tempo = (oggi.timestamp() - datainizio.timestamp()) * 100 / (datafine.timestamp() - datainizio.timestamp())
-	# Determinazione dello stato del progetto
-	if percentuale_obiettivo >= 100:
-		stato_progetto = f"Obbiettivo raggiunto nel {percentuale_tempo:.2f}% del tempo a disposizione"
-	elif percentuale_tempo >= 100:
-		stato_progetto = f"Tempo scaduto: raggiunto il {percentuale_obiettivo:.2f}% dell'obbiettivo"
-	else:
-		stato_progetto = f"Progetto in corso: raggiunto il {percentuale_obiettivo:.2f}% dell'obbiettivo nel {percentuale_tempo:.2f}% del tempo"
-	with open(f"Quinqu-{prjnome}.txt", "w", encoding="utf-8") as f:
-		f.write(f"Nome del progetto: {prjnome}\n")
-		f.write(f"Descrizione: {prjdesc}\n")
-		f.write(f"Data inizio: {Humanize(datainizio)}\n")
-		f.write(f"Data fine: {Humanize(datafine)}\n")
-		f.write(f"Valore iniziale: {valoreiniziale:+.2f}\n")
-		f.write(f"Valore obiettivo: {obiettivo:+.2f}\n")
-		f.write(f"{stato_progetto}\n\n")
-		f.write("Registro dei valori:\n")
-		contatore=1; differenza=0.0
-		for k,v in valori.items():
-			k1=Humanize(k)
-			f.write(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - di {k1}.\n")
-			contatore+=1
-			differenza=v
-		from io import StringIO
-		buf = StringIO()
-		import sys
-		original_stdout = sys.stdout
-		try:
-			sys.stdout = buf
-			Infostatistiche(valori)
-			sys.stdout = original_stdout
-			f.write(buf.getvalue())  # Aggiunge il contenuto di buf al file
-		finally:
-			buf.close()
-			sys.stdout = original_stdout
-		f.write(f"\nReport prodotto il {Humanize(dt.datetime.now())}\n")
-		f.write(f"Applicazione: Quanto In Quanto (Quinqu) versione {VERSIONE}\n")
-	print(f"Report salvato come Quinqu-{prjnome}.txt.")
-	import os
-	if os.path.exists(RECORDNAME):
-		os.remove(RECORDNAME)
-		print("Quinqu.db cancellato. Applicazione chiusa.")
-	else: print("Problema nell'individuazione del DB")
-	exit()
+def VPTempo(stato, show=False):
+    datainizio = stato["datainizio"]
+    datafine = stato["datafine"]
+    durata = datafine - datainizio
+    if show:
+        print("\nProgressi sulla linea temporale del tuo progetto di controllo del valore.")
+        print(f"Progetto iniziato in data {Humanize(datainizio)} terminerà il {Humanize(datafine)}, per un totale di {durata.days} giorni")
+        
+    oggi = dt.datetime.now().replace(microsecond=0)
+    oggi1 = oggi.timestamp()
+    d1 = datainizio.timestamp()
+    d2 = datafine.timestamp()
+    
+    if d2 == d1:
+        percentuale_tempo = 100.0
+    else:
+        percentuale_tempo = (oggi1 - d1) * 100 / (d2 - d1)
+        
+    if show:
+        giorni_trascorsi = (oggi - datainizio).days
+        if durata.days > 0:
+            frazione = fractions.Fraction(giorni_trascorsi, durata.days)
+        else:
+            frazione = "1/1"
+        print(f"Oggi è il {Humanize(oggi)}, giorno {giorni_trascorsi} di {durata.days}. Sei al {percentuale_tempo:+.2f}%, in frazione: {frazione}\ndel periodo di tempo impostato.")
+    return percentuale_tempo
 
-#QMain
-print(f"Benvenuto in Quanto In Quanto (Quinqu), versione {VERSIONE}.\nUn'App per tenere traccia dei progressi in un obiettivo,\nesprimibile con un valore numerico, da raggiungere in un determinato arco temporale.")
-print("Controllo la presenza di una registrazione salvata...")
-try:
-	f=open(RECORDNAME,"rb")
-	prjnome=pickle.load(f)
-	prjdesc=pickle.load(f)
-	datainizio=pickle.load(f)
-	datafine=pickle.load(f)
-	valori=pickle.load(f)
-	obiettivo=pickle.load(f)
-	f.close()
-	print(f"Registro caricato correttamente. Contiene {len(valori)} records.")
-	percentuale_obiettivo = VPObiettivo(valori, datainizio, datafine, obiettivo)
-	percentuale_tempo = VPTempo(valori, datainizio, datafine, obiettivo)
-	if percentuale_obiettivo >= 100 or percentuale_tempo >= 100:
-		ConcludiProgetto()
-except IOError:
-	prjnome,prjdesc,valori,datainizio,datafine,obiettivo=Inizializzazione()
-	Salva()
-	print("Iniziamo")
+def VPObiettivo(stato, show=False):
+    valori = stato["valori"]
+    obiettivo = stato["obiettivo"]
+    
+    if show:
+        print("\nProgressi ottenuti rispetto all'obiettivo prefissato:")
+    
+    if not valori:
+        if show: print("Nessun valore registrato.")
+        return 0.0
+        
+    valoreiniziale = valori[min(valori.keys())]
+    valoreattuale = valori[max(valori.keys())]
+    
+    diff_obiettivo = obiettivo - valoreiniziale
+    if diff_obiettivo == 0:
+        percentuale_obiettivo = 100.0
+    else:
+        percentuale_obiettivo = (valoreattuale - valoreiniziale) * 100 / diff_obiettivo
+        
+    if show:
+        print(f"Valore iniziale {valoreiniziale:+.2f}, attuale {valoreattuale:+.2f}, obiettivo {obiettivo:+.2f} = ({diff_obiettivo:+.2f}).")
+        ottenuto = valoreattuale - valoreiniziale
+        if diff_obiettivo != 0:
+            frazione = fractions.Fraction(int(ottenuto), int(diff_obiettivo))
+        else:
+            frazione = "1/1"
+        print(f"Ottenuto {ottenuto:+.2f} pari al {percentuale_obiettivo:+.2f}%, in frazione: {frazione}")
+        dafare = obiettivo - valoreattuale
+        perc_dafare = dafare * 100 / diff_obiettivo if diff_obiettivo != 0 else 0.0
+        print(f"Da fare {dafare:+.2f} pari al {perc_dafare:+.2f}%")
+        
+    return percentuale_obiettivo
 
-#QMainLoop
-print("Digita M per leggere il menù dell'App")
-while True:
-	attesa=key(prompt=f"CMD: {str(menuchiavi)}> ").lower()
-	if attesa=="m": VMenu()
-	elif attesa=="e": break
-	elif attesa=="n": valori=Nuovodato(valori)
-	elif attesa=="c": valori=Cancelladato(valori)
-	elif attesa=="r": VRegistro(valori)
-	elif attesa=="b": VPObiettivo(valori,datainizio,datafine,obiettivo,show=True)
-	elif attesa=="i": Infostatistiche(valori)
-	elif attesa=="a": VConfronto(valori,datainizio,datafine,obiettivo)
-	elif attesa=="f": datafine=Cambiafine(datafine)
-	elif attesa=="q": prjnome,prjdesc,valori,datainizio,datafine,obiettivo=Reset(valori,datainizio,datafine,obiettivo)
-	elif attesa=="t": VPTempo(valori,datainizio,datafine,obiettivo,show=True)
-	elif attesa=="o":
-		obiettivo=dgt(prompt=f"Obiettivo attuale: {obiettivo}, nuovo? >",kind="f",fmin=0.0,fmax=1000.0)
-		print("Nuovo obiettivo impostato.")
-	elif attesa=="s": Salva()
-	else:
-		print(attesa, "Non è un comando valido.")
-		VMenu()
-attesa=dgt(prompt="Vuoi salvare? (S|N)> ",kind="s",smin=1,smax=1,default="s")
-if attesa in "sS":
-	Salva()
-print("Arrivederci!")
+def VRegistro(stato):
+    valori = stato["valori"]
+    print("\nDati presenti nel registro dei valori:")
+    if not valori:
+        print("Il registro è vuoto.")
+        return
+        
+    contatore = 1
+    differenza = 0.0
+    for k in sorted(valori.keys()):
+        v = valori[k]
+        k1 = Humanize(k)
+        if contatore == 1:
+            print(f"({contatore}) - {v:+.2f}, (inizio) - di {k1}.")
+        else:
+            print(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - di {k1}.")
+        contatore += 1
+        differenza = v
+    print(f"Totale {len(valori)} records registrati.")
+
+def Cancelladato(stato):
+    valori = stato["valori"]
+    if not valori:
+        print("Il registro è vuoto.")
+        return stato
+        
+    valore = dgt(prompt="\nInserisci il valore che vuoi cancellare:> ", kind="f", fmin=0.0, fmax=1000.0)
+    ricerca = [k for k, v in valori.items() if v == valore]
+    
+    if not ricerca:
+        print("Non è stato trovato il valore specificato all'interno del registro")
+        return stato
+    elif len(ricerca) == 1:
+        chiave = ricerca[0]
+        if chiave == min(valori.keys()):
+            print("Impossibile eliminare il valore iniziale del progetto.")
+            return stato
+        print(f"Trovato il valore {valore}, registrato in data: {Humanize(chiave)}.")
+        del valori[chiave]
+        Acusticator(SUONO["delete"], kind=1, sync=False)
+        print(f"Dato eliminato, ora il registro contiene {len(valori)} records")
+        return stato
+        
+    print(f"Sono stati trovati {len(ricerca)} valori nel registro.\nDigita il numero di quello che vuoi eliminare.")
+    multi = {}
+    contatore = 1
+    for j in ricerca:
+        print(f"({contatore}) - in data - {Humanize(j)};")
+        multi[contatore] = j
+        contatore += 1
+        
+    scelta = dgt(prompt="Elemento da cancellare? (0 per annullare)> ", kind="i", imin=0, imax=len(multi))
+    if scelta == 0:
+        return stato
+        
+    chiave = multi[scelta]
+    if chiave == min(valori.keys()):
+        print("Impossibile eliminare il valore iniziale del progetto.")
+        return stato
+        
+    del valori[chiave]
+    Acusticator(SUONO["delete"], kind=1, sync=False)
+    print(f"Dato eliminato. Ora il registro contiene {len(valori)} records.")
+    return stato
+
+def Nuovodato(stato):
+    valori = stato["valori"]
+    valore = dgt(prompt="\nInserisci il valore da registrare:> ", kind="f")
+    Acusticator(SUONO["dato"], kind=1, sync=True)
+    
+    listavalori = list(valori.values())
+    if listavalori:
+        massimo = max(listavalori)
+        minimo = min(listavalori)
+        if valore > massimo:
+            Acusticator(SUONO["sopra"], kind=1, sync=False)
+            r = f"Nuovo record: {valore:+.2f} supera di {valore-massimo:+.2f} rispetto al massimo {massimo:+.2f}."
+        elif valore < minimo:
+            Acusticator(SUONO["sotto"], kind=1, sync=False)
+            r = f"Nuovo record: {valore:+.2f} è inferiore di {minimo-valore:+.2f} rispetto al minimo {minimo:+.2f}."
+        else:
+            Acusticator(SUONO["mezzo"], kind=1, sync=False)
+            r = f"Nuovo record nell'intervallo fra minimo {minimo:+.2f} < {valore-minimo:+.2f} < {valore:+.2f} < {massimo-valore:+.2f} < {massimo:+.2f}."
+        print(r)
+        
+    adesso = dt.datetime.now().replace(microsecond=0)
+    valori[adesso] = valore
+    print(f"Fatto. Ora il registro contiene {len(valori)} records.")
+    
+    percentuale_obiettivo = VPObiettivo(stato)
+    percentuale_tempo = VPTempo(stato)
+    if percentuale_obiettivo >= 100 or percentuale_tempo >= 100:
+        concluso = ConcludiProgetto(stato)
+        return stato, concluso
+        
+    return stato, False
+
+def VMenu():
+    print(f"\nMenù di QUINQU, versione {VERSIONE}.")
+    for k, v in menu.items():
+        print(f"---( {k.upper()} ) - -> {v};")
+
+def Cambiafine(stato):
+    datafine_attuale = stato["datafine"]
+    print(f"\nVecchia data di fine progetto: {Humanize(datafine_attuale)}.\nNuova data di fine progetto...")
+    while True:
+        nuova_data = DigitaData()
+        if nuova_data > stato["datainizio"]:
+            stato["datafine"] = nuova_data
+            break
+        print("La data di fine deve essere successiva a quella di inizio. Riprova.")
+    return stato
+
+def VConfronto(stato):
+    valori = stato["valori"]
+    datainizio = stato["datainizio"]
+    datafine = stato["datafine"]
+    obiettivo = stato["obiettivo"]
+    
+    if not valori:
+        print("Dati insufficienti per un confronto.")
+        return
+        
+    valoreiniziale = valori[min(valori.keys())]
+    valoreattuale = valori[max(valori.keys())]
+    
+    diff_obiettivo = obiettivo - valoreiniziale
+    op = (valoreattuale - valoreiniziale) * 100 / diff_obiettivo if diff_obiettivo != 0 else 100.0
+    
+    o = dt.datetime.now().replace(microsecond=0)
+    o1 = o.timestamp()
+    d1 = datainizio.timestamp()
+    d2 = datafine.timestamp()
+    
+    ot = (o1 - d1) * 100 / (d2 - d1) if d2 != d1 else 100.0
+    od = ot - op
+    
+    tolleranza = 10.0
+    if abs(ot - op) <= tolleranza:
+        oa = "progressione uniforme, molto bene!"
+    elif ot < op - tolleranza:
+        oa = "variazione del valore troppo rapida, rallentare."
+    else:
+        oa = "variazione del valore troppo lenta, accelerare."
+        
+    print(f"\nProgressi: tempo {ot:+.2f}% valore {op:+.2f}% (T={od:+.2f}%) {oa}")
+
+def Infostatistiche(stato):
+    valori = stato["valori"]
+    if len(valori) < 4:
+        print("Sono stati registrati pochi valori per mostrare le statistiche (minimo 4).")
+        return
+        
+    print("\nInformazioni statistiche sui valori registrati.")
+    l = list(valori.values())
+    print("Numero di records:", len(l))
+    
+    piupiccolo = min(l)
+    piugrande = max(l)
+    listapiccoli = [k for k, v in valori.items() if v == piupiccolo]
+    listagrandi = [k for k, v in valori.items() if v == piugrande]
+    
+    print(f"Il valore massimo è {piugrande:+.2f} e compare {len(listagrandi)} volte.")
+    for j in listagrandi:
+        print(f"\tData: {Humanize(j)};")
+        
+    print(f"Il valore minimo è {piupiccolo:+.2f} e compare {len(listapiccoli)} volte.")
+    for j in listapiccoli:
+        print(f"\tData: {Humanize(j)};")
+        
+    print(f"Media aritmetica dei valori: {statistics.fmean(l):+.2f}.")
+    print(f"Mediane: bassa {statistics.median_low(l):+.2f}, media {statistics.median(l):+.2f}, alta {statistics.median_high(l):+.2f}.")
+    print(f"Moda: {statistics.mode(l):+.2f}.")
+    print(f"Deviazione standard: {statistics.stdev(l):+.2f}.")
+    print(f"Varianza: {statistics.variance(l):+.2f}.")
+
+def ConcludiProgetto(stato):
+    prjnome = stato["prjnome"]
+    prjdesc = stato["prjdesc"]
+    datainizio = stato["datainizio"]
+    datafine = stato["datafine"]
+    valori = stato["valori"]
+    obiettivo = stato["obiettivo"]
+    
+    print("\nIl progetto è concluso. Creazione del report finale...")
+    Acusticator(SUONO["concluso"], kind=1, sync=False)
+    
+    if not valori:
+        valoreiniziale = 0
+        valoreattuale = 0
+    else:
+        valoreiniziale = valori[min(valori.keys())]
+        valoreattuale = valori[max(valori.keys())]
+        
+    diff_obiettivo = obiettivo - valoreiniziale
+    percentuale_obiettivo = (valoreattuale - valoreiniziale) * 100 / diff_obiettivo if diff_obiettivo != 0 else 100.0
+    
+    oggi = dt.datetime.now()
+    diff_tempo = datafine.timestamp() - datainizio.timestamp()
+    percentuale_tempo = (oggi.timestamp() - datainizio.timestamp()) * 100 / diff_tempo if diff_tempo != 0 else 100.0
+    
+    if percentuale_obiettivo >= 100:
+        stato_progetto = f"Obiettivo raggiunto nel {percentuale_tempo:.2f}% del tempo a disposizione"
+    elif percentuale_tempo >= 100:
+        stato_progetto = f"Tempo scaduto: raggiunto il {percentuale_obiettivo:.2f}% dell'obiettivo"
+    else:
+        stato_progetto = f"Progetto in corso: raggiunto il {percentuale_obiettivo:.2f}% dell'obiettivo nel {percentuale_tempo:.2f}% del tempo"
+        
+    nome_file = f"Quinqu-{prjnome}.txt"
+    try:
+        with open(nome_file, "w", encoding="utf-8") as f:
+            f.write(f"Nome del progetto: {prjnome}\n")
+            f.write(f"Descrizione: {prjdesc}\n")
+            f.write(f"Data inizio: {Humanize(datainizio)}\n")
+            f.write(f"Data fine: {Humanize(datafine)}\n")
+            f.write(f"Valore iniziale: {valoreiniziale:+.2f}\n")
+            f.write(f"Valore obiettivo: {obiettivo:+.2f}\n")
+            f.write(f"{stato_progetto}\n\n")
+            f.write("Registro dei valori:\n")
+            contatore = 1
+            differenza = 0.0
+            for k in sorted(valori.keys()):
+                v = valori[k]
+                k1 = Humanize(k)
+                if contatore == 1:
+                    f.write(f"({contatore}) - {v:+.2f}, (inizio) - di {k1}.\n")
+                else:
+                    f.write(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - di {k1}.\n")
+                contatore += 1
+                differenza = v
+                
+            from io import StringIO
+            buf = StringIO()
+            original_stdout = sys.stdout
+            try:
+                sys.stdout = buf
+                Infostatistiche(stato)
+                sys.stdout = original_stdout
+                f.write(buf.getvalue())
+            finally:
+                buf.close()
+                sys.stdout = original_stdout
+                
+            f.write(f"\nReport prodotto il {Humanize(dt.datetime.now())}\n")
+            f.write(f"Applicazione: Quanto In Quanto (Quinqu) versione {VERSIONE}\n")
+        print(f"Report salvato come {nome_file}.")
+    except Exception as e:
+        print(f"Errore durante la creazione del report: {e}")
+        
+    if os.path.exists(RECORDNAME):
+        try:
+            os.remove(RECORDNAME)
+            print(f"{RECORDNAME} cancellato.")
+        except OSError as e:
+            print(f"Impossibile cancellare {RECORDNAME}: {e}")
+            
+    print("Applicazione chiusa in quanto il progetto è terminato.")
+    return True
+
+def main():
+    Acusticator(SUONO["startup"], kind=1, sync=False)
+    print(f"Welcome a {AUTORE}!\nApplicazione: Quanto In Quanto (Quinqu)\nVersione {VERSIONE}\nUn'App per tenere traccia dei progressi in un obiettivo,\nesprimibile con un valore numerico, da raggiungere in un determinato arco temporale.")
+    print("Controllo la presenza di una registrazione salvata...")
+    
+    stato = Carica()
+    if stato:
+        print(f"Registro caricato correttamente. Contiene {len(stato['valori'])} records.")
+        percentuale_obiettivo = VPObiettivo(stato)
+        percentuale_tempo = VPTempo(stato)
+        if percentuale_obiettivo >= 100 or percentuale_tempo >= 100:
+            if ConcludiProgetto(stato):
+                return
+    else:
+        stato = Inizializzazione()
+        Salva(stato)
+        print("Iniziamo")
+
+    print("Digita M per leggere il menù dell'App")
+    while True:
+        attesa = key(prompt=f"CMD: {menuchiavi}> ").lower()
+        if attesa == "m":
+            VMenu()
+        elif attesa == "e":
+            Acusticator(SUONO["shutdown"], kind=1, sync=False)
+            break
+        elif attesa == "n":
+            stato, concluso = Nuovodato(stato)
+            if concluso:
+                return
+        elif attesa == "c":
+            stato = Cancelladato(stato)
+        elif attesa == "r":
+            VRegistro(stato)
+        elif attesa == "p":
+            if len(stato["valori"]) > 0:
+                dati = [stato["valori"][k] for k in sorted(stato["valori"].keys())]
+                durata = max(2.0, len(dati) * 0.2)
+                print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
+                sonify(dati, duration=durata, ptm=True, vol=0.5)
+            else:
+                print("\nNessun valore registrato per la riproduzione.")
+        elif attesa == "b":
+            VPObiettivo(stato, show=True)
+        elif attesa == "i":
+            Infostatistiche(stato)
+        elif attesa == "a":
+            VConfronto(stato)
+        elif attesa == "f":
+            stato = Cambiafine(stato)
+        elif attesa == "q":
+            stato = Reset(stato)
+        elif attesa == "t":
+            VPTempo(stato, show=True)
+        elif attesa == "o":
+            nuovo_ob = dgt(prompt=f"Obiettivo attuale: {stato['obiettivo']}, nuovo? >", kind="f", fmin=0.0, fmax=1000.0)
+            if nuovo_ob != stato['valori'][min(stato['valori'].keys())]:
+                stato['obiettivo'] = nuovo_ob
+                print("Nuovo obiettivo impostato.")
+            else:
+                print("L'obiettivo non può coincidere con il valore iniziale.")
+        elif attesa == "s":
+            Salva(stato)
+        else:
+            print(f"\n{attesa} non è un comando valido.")
+            VMenu()
+
+    attesa = dgt(prompt="\nVuoi salvare prima di uscire? (S|N)> ", kind="s", smin=1, smax=1, default="s")
+    if attesa.lower() == "s":
+        Salva(stato)
+    print("Arrivederci!")
+
+if __name__ == "__main__":
+    main()
