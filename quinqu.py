@@ -4,12 +4,12 @@
 import os
 import sys
 import pickle
-import fractions
 import statistics
 import datetime as dt
+from fractions import Fraction as frac
 from GBUtils import dgt, key, Acusticator, sonify
 
-VERSIONE = "3.2.0 del 28 febbraio 2026"
+VERSIONE = "3.2.1 del 4 marzo 2026"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.db"
 
@@ -170,7 +170,7 @@ def VPTempo(stato, show=False):
     if show:
         giorni_trascorsi = (oggi - datainizio).days
         if durata.days > 0:
-            frazione = fractions.Fraction(giorni_trascorsi, durata.days)
+            frazione = frac(giorni_trascorsi, durata.days)
         else:
             frazione = "1/1"
         print(f"Oggi è il {Humanize(oggi)}, giorno {giorni_trascorsi} di {durata.days}. Sei al {percentuale_tempo:+.2f}%, in frazione: {frazione}\ndel periodo di tempo impostato.")
@@ -200,7 +200,7 @@ def VPObiettivo(stato, show=False):
         print(f"Valore iniziale {valoreiniziale:+.2f}, attuale {valoreattuale:+.2f}, obiettivo {obiettivo:+.2f} = ({diff_obiettivo:+.2f}).")
         ottenuto = valoreattuale - valoreiniziale
         if diff_obiettivo != 0:
-            frazione = fractions.Fraction(int(ottenuto), int(diff_obiettivo))
+            frazione = frac(ottenuto / diff_obiettivo).limit_denominator()
         else:
             frazione = "1/1"
         print(f"Ottenuto {ottenuto:+.2f} pari al {percentuale_obiettivo:+.2f}%, in frazione: {frazione}")
