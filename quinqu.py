@@ -3,15 +3,17 @@
 
 import os
 import sys
+import json
 import pickle
 import statistics
 import datetime as dt
 from fractions import Fraction as frac
 from GBUtils import dgt, key, Acusticator, sonify
 
-VERSIONE = "3.2.1 del 4 marzo 2026"
+VERSIONE = "3.3.0 del 10 marzo 2026"
 AUTORE = "Gabriele"
-RECORDNAME = "quinqu.db"
+RECORDNAME = "quinqu.json"
+OLD_RECORDNAME = "quinqu.db"
 
 SUONO = {
     "dato": ["a5", .070, 0, .4, "c6", .070, 0, .4, "g6", .150, 0, .4],
@@ -46,39 +48,75 @@ menuchiavi = "".join([k + "." for k in menu.keys()])
 
 def Salva(stato):
     try:
-        with open(RECORDNAME, "wb") as f:
-            pickle.dump(stato, f, pickle.HIGHEST_PROTOCOL)
+        stato_json = {
+            "prjnome": stato["prjnome"],
+            "prjdesc": stato["prjdesc"],
+            "datainizio": stato["datainizio"].isoformat(),
+            "datafine": stato["datafine"].isoformat(),
+            "valori": {k.isoformat(): v for k, v in stato["valori"].items()},
+            "obiettivo": stato["obiettivo"]
+        }
+        with open(RECORDNAME, "w", encoding="utf-8") as f:
+            json.dump(stato_json, f, indent=4)
         Acusticator(SUONO["save"], kind=1, sync=False)
         print(f"\n{RECORDNAME} salvato.")
     except Exception as e:
         print(f"Errore durante il salvataggio: {e}")
 
 def Carica():
-    try:
-        with open(RECORDNAME, "rb") as f:
-            dati = pickle.load(f)
-            # Retrocompatibilità con la vecchia versione (6 variabili salvate in sequenza)
-            if not isinstance(dati, dict):
-                prjnome = dati
-                prjdesc = pickle.load(f)
-                datainizio = pickle.load(f)
-                datafine = pickle.load(f)
-                valori = pickle.load(f)
-                obiettivo = pickle.load(f)
-                stato = {
-                    "prjnome": prjnome,
-                    "prjdesc": prjdesc,
-                    "datainizio": datainizio,
-                    "datafine": datafine,
-                    "valori": valori,
-                    "obiettivo": obiettivo
-                }
-                # Riscriviamo il DB nel nuovo formato atomico
-                Salva(stato)
-                return stato
-            return dati
-    except (IOError, EOFError):
-        return None
+    if os.path.exists(RECORDNAME):
+        try:
+            with open(RECORDNAME, "r", encoding="utf-8") as f:
+                dati = json.load(f)
+                
+            stato = {
+                "prjnome": dati["prjnome"],
+                "prjdesc": dati["prjdesc"],
+                "datainizio": dt.datetime.fromisoformat(dati["datainizio"]),
+                "datafine": dt.datetime.fromisoformat(dati["datafine"]),
+                "valori": {dt.datetime.fromisoformat(k): v for k, v in dati["valori"].items()},
+                "obiettivo": dati["obiettivo"]
+            }
+            return stato
+        except Exception as e:
+            print(f"Errore durante il caricamento di {RECORDNAME}: {e}")
+            return None
+            
+    if os.path.exists(OLD_RECORDNAME):
+        try:
+            with open(OLD_RECORDNAME, "rb") as f:
+                dati = pickle.load(f)
+                if not isinstance(dati, dict):
+                    prjnome = dati
+                    prjdesc = pickle.load(f)
+                    datainizio = pickle.load(f)
+                    datafine = pickle.load(f)
+                    valori = pickle.load(f)
+                    obiettivo = pickle.load(f)
+                    stato = {
+                        "prjnome": prjnome,
+                        "prjdesc": prjdesc,
+                        "datainizio": datainizio,
+                        "datafine": datafine,
+                        "valori": valori,
+                        "obiettivo": obiettivo
+                    }
+                else:
+                    stato = dati
+            
+            print(f"Trovato vecchio file {OLD_RECORDNAME}. Conversione in formato JSON in corso...")
+            Salva(stato)
+            try:
+                os.rename(OLD_RECORDNAME, OLD_RECORDNAME + ".bak")
+                print(f"Il vecchio file è stato rinominato in {OLD_RECORDNAME}.bak per sicurezza.")
+            except Exception as e:
+                pass
+            return stato
+        except Exception as e:
+            print(f"Errore durante il caricamento di {OLD_RECORDNAME}: {e}")
+            return None
+            
+    return None
 
 def DigitaData():
     oggi = dt.datetime.now().replace(microsecond=0)
@@ -359,6 +397,7 @@ def VConfronto(stato):
 
 def Infostatistiche(stato):
     valori = stato["valori"]
+    obiettivo = stato["obiettivo"]
     if len(valori) < 4:
         print("Sono stati registrati pochi valori per mostrare le statistiche (minimo 4).")
         return
@@ -385,6 +424,62 @@ def Infostatistiche(stato):
     print(f"Moda: {statistics.mode(l):+.2f}.")
     print(f"Deviazione standard: {statistics.stdev(l):+.2f}.")
     print(f"Varianza: {statistics.variance(l):+.2f}.")
+
+    date_ordinate = sorted(valori.keys())
+    primo_valore = valori[date_ordinate[0]]
+    ultimo_valore = valori[date_ordinate[-1]]
+    variazione_totale = ultimo_valore - primo_valore
+    print(f"\nVariazione totale dal primo all'ultimo record: {variazione_totale:+.2f}")
+
+    salti = []
+    aumenti = 0
+    cali = 0
+    tempi_tra_inserimenti = []
+
+    for i in range(1, len(date_ordinate)):
+        data_prec = date_ordinate[i-1]
+        data_corr = date_ordinate[i]
+        val_prec = valori[data_prec]
+        val_corr = valori[data_corr]
+        delta_val = val_corr - val_prec
+        delta_tempo = data_corr - data_prec
+        
+        salti.append((delta_val, data_corr))
+        tempi_tra_inserimenti.append(delta_tempo.total_seconds())
+
+        if delta_val > 0:
+            aumenti += 1
+        elif delta_val < 0:
+            cali += 1
+
+    salto_max = max(salti, key=lambda x: x[0])
+    salto_min = min(salti, key=lambda x: x[0])
+
+    print(f"Trend dei passaggi: {aumenti} aumenti, {cali} cali, {len(salti) - aumenti - cali} stabili.")
+    if salto_max[0] > 0:
+        print(f"Picco di aumento: {salto_max[0]:+.2f} registrato in data {Humanize(salto_max[1])}.")
+    if salto_min[0] < 0:
+        print(f"Picco di calo: {salto_min[0]:+.2f} registrato in data {Humanize(salto_min[1])}.")
+
+    media_step = statistics.fmean([x[0] for x in salti])
+    print(f"Variazione media per step: {media_step:+.2f}")
+
+    media_tempo_sec = statistics.fmean(tempi_tra_inserimenti)
+    giorni_media = media_tempo_sec // 86400
+    ore_media = (media_tempo_sec % 86400) // 3600
+    print(f"Frequenza media di inserimento: ogni {int(giorni_media)} giorni e {int(ore_media)} ore.")
+
+    if variazione_totale != 0:
+        tempo_trascorso = (date_ordinate[-1] - date_ordinate[0]).total_seconds()
+        velocita = variazione_totale / tempo_trascorso if tempo_trascorso > 0 else 0
+        da_fare = obiettivo - ultimo_valore
+        
+        if velocita != 0 and (da_fare / velocita) > 0:
+            secondi_mancanti = da_fare / velocita
+            data_stimata = date_ordinate[-1] + dt.timedelta(seconds=secondi_mancanti)
+            print(f"Proiezione: mantenendo questa velocità, l'obiettivo ({obiettivo:+.2f}) potrebbe essere raggiunto il {Humanize(data_stimata)}.")
+        else:
+            print(f"Proiezione: andamento non in direzione dell'obiettivo ({obiettivo:+.2f}) o velocità nulla.")
 
 def ConcludiProgetto(stato):
     prjnome = stato["prjnome"]
@@ -494,6 +589,7 @@ def main():
             VMenu()
         elif attesa == "e":
             Acusticator(SUONO["shutdown"], kind=1, sync=False)
+            Salva(stato)
             break
         elif attesa == "n":
             stato, concluso = Nuovodato(stato)
@@ -506,7 +602,7 @@ def main():
         elif attesa == "p":
             if len(stato["valori"]) > 0:
                 dati = [stato["valori"][k] for k in sorted(stato["valori"].keys())]
-                durata = max(2.0, len(dati) * 0.2)
+                durata = len(dati) * 0.25
                 print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
                 sonify(dati, duration=durata, ptm=True, vol=0.5)
             else:
@@ -536,9 +632,6 @@ def main():
             print(f"\n{attesa} non è un comando valido.")
             VMenu()
 
-    attesa = dgt(prompt="\nVuoi salvare prima di uscire? (S|N)> ", kind="s", smin=1, smax=1, default="s")
-    if attesa.lower() == "s":
-        Salva(stato)
     print("Arrivederci!")
 
 if __name__ == "__main__":
