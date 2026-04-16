@@ -10,7 +10,7 @@ import datetime as dt
 from fractions import Fraction as frac
 from GBUtils import dgt, key, Acusticator, sonify
 
-VERSIONE = "3.3.0 del 10 marzo 2026"
+VERSIONE = "3.3.1 del 12 aprile 2026"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
@@ -34,7 +34,9 @@ menu = {
     "f": "Modifica la data di fine progetto",
     "o": "Modifica l'obiettivo",
     "r": "Mostra il registro",
-    "p": "Ascolta l'andamento dei valori (sonify)",
+    "p": "Ascolta l'andamento dei valori (portamento)",
+    "è": "Ascolta l'andamento dei valori (No portamento)",
+    "+": "Ascolta l'andamento dei valori (scegli durata)",
     "b": "Vedi il progresso rispetto all'obiettivo",
     "t": "Vedi il progresso rispetto al tempo",
     "a": "Confronta tempo e obiettivo",
@@ -109,7 +111,7 @@ def Carica():
             try:
                 os.rename(OLD_RECORDNAME, OLD_RECORDNAME + ".bak")
                 print(f"Il vecchio file è stato rinominato in {OLD_RECORDNAME}.bak per sicurezza.")
-            except Exception as e:
+            except Exception:
                 pass
             return stato
         except Exception as e:
@@ -588,7 +590,7 @@ def main():
         if attesa == "m":
             VMenu()
         elif attesa == "e":
-            Acusticator(SUONO["shutdown"], kind=1, sync=False)
+            Acusticator(SUONO["shutdown"], kind=1, sync=True)
             Salva(stato)
             break
         elif attesa == "n":
@@ -603,6 +605,22 @@ def main():
             if len(stato["valori"]) > 0:
                 dati = [stato["valori"][k] for k in sorted(stato["valori"].keys())]
                 durata = len(dati) * 0.25
+                print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
+                sonify(dati, duration=durata, ptm=True, vol=0.5)
+            else:
+                print("\nNessun valore registrato per la riproduzione.")
+        elif attesa == "è":
+            if len(stato["valori"]) > 0:
+                dati = [stato["valori"][k] for k in sorted(stato["valori"].keys())]
+                durata = len(dati) * 0.25
+                print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
+                sonify(dati, duration=durata, ptm=False, vol=0.5)
+            else:
+                print("\nNessun valore registrato per la riproduzione.")
+        elif attesa == "+":
+            if len(stato["valori"]) > 0:
+                dati = [stato["valori"][k] for k in sorted(stato["valori"].keys())]
+                durata = dgt("Durata? ", kind="f", fmin=3.0, fmax=60.0, default=len(dati) * 0.25)
                 print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
                 sonify(dati, duration=durata, ptm=True, vol=0.5)
             else:
