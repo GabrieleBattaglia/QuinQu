@@ -8,9 +8,9 @@ import pickle
 import statistics
 import datetime as dt
 from fractions import Fraction as frac
-from GBUtils import dgt, key, Acusticator, sonify
+from GBUtils import dgt, Acusticator, sonify, menu
 
-VERSIONE = "3.3.1 del 12 aprile 2026"
+VERSIONE = "4.1.0 del 10 marzo 2026"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
@@ -28,39 +28,42 @@ SUONO = {
     "concluso": ["c5", 0.15, 0, 0.4, "e5", 0.15, 0, 0.4, "g5", 0.15, 0, 0.4, "c6", 0.15, 0, 0.4, "e6", 0.15, 0, 0.4, "g6", 0.4, 0, 0.4]
 }
 
-menu = {
-    "n": "Nuova registrazione del valore",
-    "c": "Cancella un valore",
-    "f": "Modifica la data di fine progetto",
-    "o": "Modifica l'obiettivo",
-    "r": "Mostra il registro",
-    "p": "Ascolta l'andamento dei valori (portamento)",
-    "è": "Ascolta l'andamento dei valori (No portamento)",
-    "+": "Ascolta l'andamento dei valori (scegli durata)",
-    "b": "Vedi il progresso rispetto all'obiettivo",
-    "t": "Vedi il progresso rispetto al tempo",
-    "a": "Confronta tempo e obiettivo",
-    "i": "Informazioni statistiche",
-    "s": "Salva il registro",
-    "m": "Mostra il menù",
-    "q": "Elimina definitivamente tutti i dati",
-    "e": "Esci dall'App"
+main_menu = {
+    "nuovo": "Nuova registrazione del valore",
+    "cancella": "Cancella un valore",
+    "fine": "Modifica la data di fine progetto",
+    "obiettivo": "Modifica l'obiettivo",
+    "registro": "Mostra il registro",
+    "suono_p": "Ascolta l'andamento dei valori (portamento)",
+    "suono_np": "Ascolta l'andamento dei valori (No portamento)",
+    "suono_d": "Ascolta l'andamento dei valori (scegli durata)",
+    "progresso_ob": "Vedi il progresso rispetto all'obiettivo",
+    "progresso_t": "Vedi il progresso rispetto al tempo",
+    "confronto": "Confronta tempo e obiettivo",
+    "statistiche": "Informazioni statistiche",
+    "salva": "Salva il registro",
+    "cambia": "Cambia obiettivo gestito",
+    "elimina": "Elimina l'obiettivo corrente",
+    "menu": "Mostra il menù",
+    "reset": "Elimina definitivamente tutti i dati (RESET GLOBALE)",
+    "esci": "Esci dall'App"
 }
-menuchiavi = "".join([k + "." for k in menu.keys()])
 
-def Salva(stato):
+def Salva(progetti):
     try:
-        stato_json = {
-            "prjnome": stato["prjnome"],
-            "prjdesc": stato["prjdesc"],
-            "datainizio": stato["datainizio"].isoformat(),
-            "datafine": stato["datafine"].isoformat(),
-            "valori": {k.isoformat(): v for k, v in stato["valori"].items()},
-            "obiettivo": stato["obiettivo"]
-        }
+        progetti_json = {}
+        for pid, p in progetti.items():
+            progetti_json[pid] = {
+                "prjnome": p["prjnome"],
+                "prjdesc": p["prjdesc"],
+                "datainizio": p["datainizio"].isoformat(),
+                "datafine": p["datafine"].isoformat(),
+                "valori": {k.isoformat(): v for k, v in p["valori"].items()},
+                "obiettivo": p["obiettivo"]
+            }
         with open(RECORDNAME, "w", encoding="utf-8") as f:
-            json.dump(stato_json, f, indent=4)
-        Acusticator(SUONO["save"], kind=1, sync=False)
+            json.dump(progetti_json, f, indent=4)
+        Acusticator(SUONO["save"], kind=1, sync=True)
         print(f"\n{RECORDNAME} salvato.")
     except Exception as e:
         print(f"Errore durante il salvataggio: {e}")
@@ -71,15 +74,20 @@ def Carica():
             with open(RECORDNAME, "r", encoding="utf-8") as f:
                 dati = json.load(f)
                 
-            stato = {
-                "prjnome": dati["prjnome"],
-                "prjdesc": dati["prjdesc"],
-                "datainizio": dt.datetime.fromisoformat(dati["datainizio"]),
-                "datafine": dt.datetime.fromisoformat(dati["datafine"]),
-                "valori": {dt.datetime.fromisoformat(k): v for k, v in dati["valori"].items()},
-                "obiettivo": dati["obiettivo"]
-            }
-            return stato
+            if "prjnome" in dati:
+                dati = {"0": dati}
+
+            progetti = {}
+            for pid, p in dati.items():
+                progetti[pid] = {
+                    "prjnome": p["prjnome"],
+                    "prjdesc": p["prjdesc"],
+                    "datainizio": dt.datetime.fromisoformat(p["datainizio"]),
+                    "datafine": dt.datetime.fromisoformat(p["datafine"]),
+                    "valori": {dt.datetime.fromisoformat(k): v for k, v in p["valori"].items()},
+                    "obiettivo": p["obiettivo"]
+                }
+            return progetti
         except Exception as e:
             print(f"Errore durante il caricamento di {RECORDNAME}: {e}")
             return None
@@ -107,13 +115,14 @@ def Carica():
                     stato = dati
             
             print(f"Trovato vecchio file {OLD_RECORDNAME}. Conversione in formato JSON in corso...")
-            Salva(stato)
+            progetti = {"0": stato}
+            Salva(progetti)
             try:
                 os.rename(OLD_RECORDNAME, OLD_RECORDNAME + ".bak")
                 print(f"Il vecchio file è stato rinominato in {OLD_RECORDNAME}.bak per sicurezza.")
             except Exception:
                 pass
-            return stato
+            return progetti
         except Exception as e:
             print(f"Errore durante il caricamento di {OLD_RECORDNAME}: {e}")
             return None
@@ -125,13 +134,11 @@ def DigitaData():
     anno = dgt(prompt=f"\nAnno? invio={oggi.year}> ", kind="i", imin=1970, imax=2500, default=oggi.year)
     mese = dgt(prompt=f"Mese? invio={oggi.month}> ", kind="i", imin=1, imax=12, default=oggi.month)
     
-    # Calcolo esatto dei giorni per gestire anni bisestili e mesi
     if mese in [1, 3, 5, 7, 8, 10, 12]:
         maxgiorno = 31
     elif mese in [4, 6, 9, 11]:
         maxgiorno = 30
     else:
-        # Anno bisestile
         if (anno % 4 == 0 and anno % 100 != 0) or (anno % 400 == 0):
             maxgiorno = 29
         else:
@@ -176,13 +183,13 @@ def Inizializzazione():
         "obiettivo": obiettivo
     }
 
-def Reset(stato):
-    attesa = dgt(prompt="ATTENZIONE! Sei sicuro di voler cancellare tutto?\nL'operazione è irreversibile! Digita 'sicuro'> ", kind="s", smin=0, smax=12, default="n")
+def Reset(progetti):
+    attesa = dgt(prompt="ATTENZIONE! Sei sicuro di voler cancellare TUTTI i progetti?\nL'operazione è irreversibile! Digita 'sicuro'> ", kind="s", smin=0, smax=12, default="n")
     if attesa == "sicuro":
-        Acusticator(SUONO["reset"], kind=1, sync=False)
-        return Inizializzazione()
+        Acusticator(SUONO["reset"], kind=1, sync=True)
+        return {"0": Inizializzazione()}, "0"
     print("Non tocco nulla.")
-    return stato
+    return progetti, None
 
 def Humanize(d):
     giorni = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
@@ -289,7 +296,7 @@ def Cancelladato(stato):
             return stato
         print(f"Trovato il valore {valore}, registrato in data: {Humanize(chiave)}.")
         del valori[chiave]
-        Acusticator(SUONO["delete"], kind=1, sync=False)
+        Acusticator(SUONO["delete"], kind=1, sync=True)
         print(f"Dato eliminato, ora il registro contiene {len(valori)} records")
         return stato
         
@@ -311,7 +318,7 @@ def Cancelladato(stato):
         return stato
         
     del valori[chiave]
-    Acusticator(SUONO["delete"], kind=1, sync=False)
+    Acusticator(SUONO["delete"], kind=1, sync=True)
     print(f"Dato eliminato. Ora il registro contiene {len(valori)} records.")
     return stato
 
@@ -325,19 +332,50 @@ def Nuovodato(stato):
         massimo = max(listavalori)
         minimo = min(listavalori)
         if valore > massimo:
-            Acusticator(SUONO["sopra"], kind=1, sync=False)
+            Acusticator(SUONO["sopra"], kind=1, sync=True)
             r = f"Nuovo record: {valore:+.2f} supera di {valore-massimo:+.2f} rispetto al massimo {massimo:+.2f}."
         elif valore < minimo:
-            Acusticator(SUONO["sotto"], kind=1, sync=False)
+            Acusticator(SUONO["sotto"], kind=1, sync=True)
             r = f"Nuovo record: {valore:+.2f} è inferiore di {minimo-valore:+.2f} rispetto al minimo {minimo:+.2f}."
         else:
-            Acusticator(SUONO["mezzo"], kind=1, sync=False)
+            Acusticator(SUONO["mezzo"], kind=1, sync=True)
             r = f"Nuovo record nell'intervallo fra minimo {minimo:+.2f} < {valore-minimo:+.2f} < {valore:+.2f} < {massimo-valore:+.2f} < {massimo:+.2f}."
         print(r)
         
     adesso = dt.datetime.now().replace(microsecond=0)
     valori[adesso] = valore
     print(f"Fatto. Ora il registro contiene {len(valori)} records.")
+    
+    valoreiniziale = valori[min(valori.keys())]
+    obiettivo = stato["obiettivo"]
+    durata_totale = (stato["datafine"] - stato["datainizio"]).total_seconds()
+    tempo_trascorso = (adesso - stato["datainizio"]).total_seconds()
+    
+    if durata_totale > 0:
+        perc_t = tempo_trascorso / durata_totale
+        valore_ideale = valoreiniziale + (obiettivo - valoreiniziale) * perc_t
+    else:
+        valore_ideale = obiettivo
+        
+    diff_ideale = valore - valore_ideale
+    if abs(valore_ideale) > 0:
+        perc_diff_ideale = (diff_ideale / abs(valore_ideale)) * 100
+    else:
+        diff_obiettivo = obiettivo - valoreiniziale
+        perc_diff_ideale = (diff_ideale / abs(diff_obiettivo)) * 100 if diff_obiettivo != 0 else 0.0
+
+    if abs(diff_ideale) < 0.01:
+        giudizio = "perfettamente in linea"
+    elif diff_ideale < 0:
+        giudizio = "inferiore"
+    else:
+        giudizio = "superiore"
+
+    print(f"Valore ideale utile per completare in tempo: {valore_ideale:.2f}.")
+    if abs(diff_ideale) >= 0.01:
+        print(f"Il valore inserito è {giudizio} a quello utile di {abs(diff_ideale):.2f} (deviazione {perc_diff_ideale:+.2f}%).")
+    else:
+        print("Il valore inserito è esattamente in pari con la tabella di marcia ideale.")
     
     percentuale_obiettivo = VPObiettivo(stato)
     percentuale_tempo = VPTempo(stato)
@@ -349,8 +387,38 @@ def Nuovodato(stato):
 
 def VMenu():
     print(f"\nMenù di QUINQU, versione {VERSIONE}.")
-    for k, v in menu.items():
-        print(f"---( {k.upper()} ) - -> {v};")
+    menu(d=main_menu, show_only=True)
+
+def SelezionaProgetto(progetti):
+    opzioni = {}
+    for pid, p in progetti.items():
+        perc_ob = VPObiettivo(p, show=False)
+        perc_t = VPTempo(p, show=False)
+        desc = f"{p['prjnome']} ({len(p['valori'])} dati) [Obiettivo: {perc_ob:.1f}%, Tempo: {perc_t:.1f}%]\n    > {p['prjdesc']}"
+        opzioni[pid] = desc
+        
+    if len(progetti) < 10:
+        opzioni["n"] = "-- Crea Nuovo Obiettivo --"
+                
+    print("\nObiettivi disponibili:")
+    while True:
+        scelta = menu(d=opzioni, p="Scegli obiettivo: ", show=True, keyslist=True)
+        if scelta is None:
+            if progetti:
+                print("Selezione annullata.")
+                return list(progetti.keys())[0]
+            else:
+                continue
+                
+        if scelta == "n":
+            for i in range(10):
+                if str(i) not in progetti:
+                    nuovo_id = str(i)
+                    break
+            progetti[nuovo_id] = Inizializzazione()
+            return nuovo_id
+            
+        return scelta
 
 def Cambiafine(stato):
     datafine_attuale = stato["datafine"]
@@ -454,22 +522,23 @@ def Infostatistiche(stato):
         elif delta_val < 0:
             cali += 1
 
-    salto_max = max(salti, key=lambda x: x[0])
-    salto_min = min(salti, key=lambda x: x[0])
+    if salti:
+        salto_max = max(salti, key=lambda x: x[0])
+        salto_min = min(salti, key=lambda x: x[0])
 
-    print(f"Trend dei passaggi: {aumenti} aumenti, {cali} cali, {len(salti) - aumenti - cali} stabili.")
-    if salto_max[0] > 0:
-        print(f"Picco di aumento: {salto_max[0]:+.2f} registrato in data {Humanize(salto_max[1])}.")
-    if salto_min[0] < 0:
-        print(f"Picco di calo: {salto_min[0]:+.2f} registrato in data {Humanize(salto_min[1])}.")
+        print(f"Trend dei passaggi: {aumenti} aumenti, {cali} cali, {len(salti) - aumenti - cali} stabili.")
+        if salto_max[0] > 0:
+            print(f"Picco di aumento: {salto_max[0]:+.2f} registrato in data {Humanize(salto_max[1])}.")
+        if salto_min[0] < 0:
+            print(f"Picco di calo: {salto_min[0]:+.2f} registrato in data {Humanize(salto_min[1])}.")
 
-    media_step = statistics.fmean([x[0] for x in salti])
-    print(f"Variazione media per step: {media_step:+.2f}")
+        media_step = statistics.fmean([x[0] for x in salti])
+        print(f"Variazione media per step: {media_step:+.2f}")
 
-    media_tempo_sec = statistics.fmean(tempi_tra_inserimenti)
-    giorni_media = media_tempo_sec // 86400
-    ore_media = (media_tempo_sec % 86400) // 3600
-    print(f"Frequenza media di inserimento: ogni {int(giorni_media)} giorni e {int(ore_media)} ore.")
+        media_tempo_sec = statistics.fmean(tempi_tra_inserimenti)
+        giorni_media = media_tempo_sec // 86400
+        ore_media = (media_tempo_sec % 86400) // 3600
+        print(f"Frequenza media di inserimento: ogni {int(giorni_media)} giorni e {int(ore_media)} ore.")
 
     if variazione_totale != 0:
         tempo_trascorso = (date_ordinate[-1] - date_ordinate[0]).total_seconds()
@@ -483,6 +552,15 @@ def Infostatistiche(stato):
         else:
             print(f"Proiezione: andamento non in direzione dell'obiettivo ({obiettivo:+.2f}) o velocità nulla.")
 
+    oggi = dt.datetime.now().replace(microsecond=0)
+    giorni_rimanenti = (stato["datafine"] - oggi).total_seconds() / 86400
+    da_fare_oggi = obiettivo - ultimo_valore
+    if giorni_rimanenti > 0 and da_fare_oggi != 0:
+        valore_giornaliero = da_fare_oggi / giorni_rimanenti
+        print(f"Tabella di marcia: occorre acquisire {valore_giornaliero:+.2f} al giorno per completare in tempo.")
+    elif giorni_rimanenti <= 0 and da_fare_oggi != 0:
+        print("Tempo a disposizione scaduto per calcolare il progresso giornaliero necessario.")
+
 def ConcludiProgetto(stato):
     prjnome = stato["prjnome"]
     prjdesc = stato["prjdesc"]
@@ -492,7 +570,7 @@ def ConcludiProgetto(stato):
     obiettivo = stato["obiettivo"]
     
     print("\nIl progetto è concluso. Creazione del report finale...")
-    Acusticator(SUONO["concluso"], kind=1, sync=False)
+    Acusticator(SUONO["concluso"], kind=1, sync=True)
     
     if not valori:
         valoreiniziale = 0
@@ -555,102 +633,166 @@ def ConcludiProgetto(stato):
         print(f"Report salvato come {nome_file}.")
     except Exception as e:
         print(f"Errore durante la creazione del report: {e}")
-        
-    if os.path.exists(RECORDNAME):
-        try:
-            os.remove(RECORDNAME)
-            print(f"{RECORDNAME} cancellato.")
-        except OSError as e:
-            print(f"Impossibile cancellare {RECORDNAME}: {e}")
             
-    print("Applicazione chiusa in quanto il progetto è terminato.")
+    print(f"Progetto '{prjnome}' terminato e report generato.")
     return True
 
 def main():
-    Acusticator(SUONO["startup"], kind=1, sync=False)
+    Acusticator(SUONO["startup"], kind=1, sync=True)
     print(f"Welcome a {AUTORE}!\nApplicazione: Quanto In Quanto (Quinqu)\nVersione {VERSIONE}\nUn'App per tenere traccia dei progressi in un obiettivo,\nesprimibile con un valore numerico, da raggiungere in un determinato arco temporale.")
     print("Controllo la presenza di una registrazione salvata...")
     
-    stato = Carica()
-    if stato:
-        print(f"Registro caricato correttamente. Contiene {len(stato['valori'])} records.")
-        percentuale_obiettivo = VPObiettivo(stato)
-        percentuale_tempo = VPTempo(stato)
-        if percentuale_obiettivo >= 100 or percentuale_tempo >= 100:
-            if ConcludiProgetto(stato):
-                return
+    progetti = Carica()
+    if progetti is None:
+        progetti = {}
+        
+    if not progetti:
+        print("Nessun obiettivo presente. Creiamone uno.")
+        nuovo_stato = Inizializzazione()
+        progetti["0"] = nuovo_stato
+        id_corrente = "0"
+        Salva(progetti)
     else:
-        stato = Inizializzazione()
-        Salva(stato)
-        print("Iniziamo")
+        if len(progetti) == 1:
+            id_corrente = list(progetti.keys())[0]
+            print(f"Unico obiettivo trovato e caricato: {progetti[id_corrente]['prjnome']}")
+        else:
+            id_corrente = SelezionaProgetto(progetti)
+            Salva(progetti)
+
+    stato = progetti[id_corrente]
+
+    percentuale_obiettivo = VPObiettivo(stato)
+    percentuale_tempo = VPTempo(stato)
+    if percentuale_obiettivo >= 100 or percentuale_tempo >= 100:
+        if ConcludiProgetto(stato):
+            del progetti[id_corrente]
+            Salva(progetti)
+            if len(progetti) == 0:
+                print("Tutti gli obiettivi sono stati conclusi.")
+                attesa_nuovo = dgt(prompt="\nVuoi creare un nuovo obiettivo? (S|N)> ", kind="s", smin=1, smax=1, default="s").lower()
+                if attesa_nuovo == "s":
+                    nuovo_stato = Inizializzazione()
+                    progetti["0"] = nuovo_stato
+                    id_corrente = "0"
+                    stato = progetti[id_corrente]
+                    Salva(progetti)
+                else:
+                    return
+            else:
+                id_corrente = list(progetti.keys())[0]
+                stato = progetti[id_corrente]
 
     print("Digita M per leggere il menù dell'App")
     while True:
-        attesa = key(prompt=f"CMD: {menuchiavi}> ").lower()
-        if attesa == "m":
+        print(f"\n[ Obiettivo attivo: {stato['prjnome']} ]")
+        attesa = menu(d=main_menu, p="CMD> ", show=False)
+        if attesa is None:
+            continue
+        attesa = attesa.lower()
+        
+        if attesa == "menu":
             VMenu()
-        elif attesa == "e":
+        elif attesa == "esci":
             Acusticator(SUONO["shutdown"], kind=1, sync=True)
-            Salva(stato)
+            Salva(progetti)
             break
-        elif attesa == "n":
+        elif attesa == "nuovo":
             stato, concluso = Nuovodato(stato)
             if concluso:
-                return
-        elif attesa == "c":
+                del progetti[id_corrente]
+                Salva(progetti)
+                if len(progetti) == 0:
+                    print("Tutti gli obiettivi sono stati conclusi.")
+                    attesa_nuovo = dgt(prompt="\nVuoi creare un nuovo obiettivo? (S|N)> ", kind="s", smin=1, smax=1, default="s").lower()
+                    if attesa_nuovo == "s":
+                        nuovo_stato = Inizializzazione()
+                        progetti["0"] = nuovo_stato
+                        id_corrente = "0"
+                        stato = progetti[id_corrente]
+                        Salva(progetti)
+                    else:
+                        break
+                else:
+                    id_corrente = list(progetti.keys())[0]
+                    stato = progetti[id_corrente]
+        elif attesa == "cancella":
             stato = Cancelladato(stato)
-        elif attesa == "r":
+        elif attesa == "registro":
             VRegistro(stato)
-        elif attesa == "p":
+        elif attesa == "suono_p":
             if len(stato["valori"]) > 0:
                 dati = [stato["valori"][k] for k in sorted(stato["valori"].keys())]
                 durata = len(dati) * 0.25
                 print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
-                sonify(dati, duration=durata, ptm=True, vol=0.5)
+                sonify(dati, duration=durata, ptm=True, vol=0.3)
             else:
                 print("\nNessun valore registrato per la riproduzione.")
-        elif attesa == "è":
+        elif attesa == "suono_np":
             if len(stato["valori"]) > 0:
                 dati = [stato["valori"][k] for k in sorted(stato["valori"].keys())]
                 durata = len(dati) * 0.25
                 print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
-                sonify(dati, duration=durata, ptm=False, vol=0.5)
+                sonify(dati, duration=durata, ptm=False, vol=0.3)
             else:
                 print("\nNessun valore registrato per la riproduzione.")
-        elif attesa == "+":
+        elif attesa == "suono_d":
             if len(stato["valori"]) > 0:
                 dati = [stato["valori"][k] for k in sorted(stato["valori"].keys())]
-                durata = dgt("Durata? ", kind="f", fmin=3.0, fmax=60.0, default=len(dati) * 0.25)
+                durata = dgt(prompt="Durata? ", kind="f", fmin=3.0, fmax=60.0, default=len(dati) * 0.25)
                 print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
-                sonify(dati, duration=durata, ptm=True, vol=0.5)
+                sonify(dati, duration=durata, ptm=True, vol=0.3)
             else:
                 print("\nNessun valore registrato per la riproduzione.")
-        elif attesa == "b":
+        elif attesa == "progresso_ob":
             VPObiettivo(stato, show=True)
-        elif attesa == "i":
+        elif attesa == "statistiche":
             Infostatistiche(stato)
-        elif attesa == "a":
+        elif attesa == "confronto":
             VConfronto(stato)
-        elif attesa == "f":
+        elif attesa == "fine":
             stato = Cambiafine(stato)
-        elif attesa == "q":
-            stato = Reset(stato)
-        elif attesa == "t":
+        elif attesa == "reset":
+            progetti, nuovo_id = Reset(progetti)
+            if nuovo_id is not None:
+                id_corrente = nuovo_id
+                stato = progetti[id_corrente]
+                Salva(progetti)
+        elif attesa == "progresso_t":
             VPTempo(stato, show=True)
-        elif attesa == "o":
+        elif attesa == "obiettivo":
             nuovo_ob = dgt(prompt=f"Obiettivo attuale: {stato['obiettivo']}, nuovo? >", kind="f", fmin=0.0, fmax=1000.0)
             if nuovo_ob != stato['valori'][min(stato['valori'].keys())]:
                 stato['obiettivo'] = nuovo_ob
                 print("Nuovo obiettivo impostato.")
             else:
                 print("L'obiettivo non può coincidere con il valore iniziale.")
-        elif attesa == "s":
-            Salva(stato)
+        elif attesa == "salva":
+            Salva(progetti)
+        elif attesa == "cambia":
+            id_corrente = SelezionaProgetto(progetti)
+            stato = progetti[id_corrente]
+            print(f"Passato a {stato['prjnome']}.")
+        elif attesa == "elimina":
+            attesa_del = dgt(prompt=f"Vuoi davvero eliminare l'obiettivo {stato['prjnome']}? (sicuro)> ", kind="s", smin=0, smax=12, default="n")
+            if attesa_del == "sicuro":
+                Acusticator(SUONO["delete"], kind=1, sync=True)
+                del progetti[id_corrente]
+                if len(progetti) == 0:
+                    print("Tutti gli obiettivi sono stati eliminati.")
+                    nuovo_stato = Inizializzazione()
+                    progetti["0"] = nuovo_stato
+                    id_corrente = "0"
+                else:
+                    id_corrente = list(progetti.keys())[0]
+                stato = progetti[id_corrente]
+                Salva(progetti)
+                print(f"Obiettivo eliminato. Passato a {stato['prjnome']}.")
+            else:
+                print("Operazione annullata.")
         else:
             print(f"\n{attesa} non è un comando valido.")
             VMenu()
-
-    print("Arrivederci!")
 
 if __name__ == "__main__":
     main()
