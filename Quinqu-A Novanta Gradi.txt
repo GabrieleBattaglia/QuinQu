@@ -1,0 +1,80 @@
+Nome del progetto: A Novanta Gradi
+Descrizione: Scendere sti cazzo di 5 kg fino a 90.
+Data inizio: sabato 28 febbraio 2026, ore 21:50
+Data fine: giovedì 30 aprile 2026, ore 21:00
+Valore iniziale: +95.00
+Valore obiettivo: +90.00
+Tempo scaduto: raggiunto il -51.00% dell'obiettivo
+
+Registro dei valori:
+(1) - +95.00, (inizio) - di sabato 28 febbraio 2026, ore 21:50.
+(2) - +94.75, (-0.25) - di domenica 1 marzo 2026, ore 06:38.
+(3) - +94.80, (+0.05) - di lunedì 2 marzo 2026, ore 08:31.
+(4) - +94.50, (-0.30) - di martedì 3 marzo 2026, ore 14:13.
+(5) - +94.25, (-0.25) - di mercoledì 4 marzo 2026, ore 08:38.
+(6) - +95.10, (+0.85) - di giovedì 5 marzo 2026, ore 06:46.
+(7) - +94.35, (-0.75) - di venerdì 6 marzo 2026, ore 07:33.
+(8) - +93.65, (-0.70) - di sabato 7 marzo 2026, ore 10:59.
+(9) - +93.35, (-0.30) - di domenica 8 marzo 2026, ore 15:49.
+(10) - +93.60, (+0.25) - di lunedì 9 marzo 2026, ore 13:28.
+(11) - +94.60, (+1.00) - di martedì 10 marzo 2026, ore 08:42.
+(12) - +94.45, (-0.15) - di mercoledì 11 marzo 2026, ore 07:43.
+(13) - +94.25, (-0.20) - di giovedì 12 marzo 2026, ore 11:47.
+(14) - +94.25, (+0.00) - di venerdì 13 marzo 2026, ore 08:15.
+(15) - +94.55, (+0.30) - di sabato 14 marzo 2026, ore 07:07.
+(16) - +94.40, (-0.15) - di domenica 15 marzo 2026, ore 09:42.
+(17) - +95.25, (+0.85) - di lunedì 16 marzo 2026, ore 08:41.
+(18) - +95.20, (-0.05) - di martedì 17 marzo 2026, ore 08:21.
+(19) - +94.95, (-0.25) - di giovedì 19 marzo 2026, ore 08:17.
+(20) - +95.55, (+0.60) - di giovedì 19 marzo 2026, ore 08:38.
+(21) - +94.90, (-0.65) - di venerdì 20 marzo 2026, ore 07:18.
+(22) - +94.70, (-0.20) - di sabato 21 marzo 2026, ore 09:31.
+(23) - +94.35, (-0.35) - di domenica 22 marzo 2026, ore 08:20.
+(24) - +94.90, (+0.55) - di lunedì 23 marzo 2026, ore 06:51.
+(25) - +94.70, (-0.20) - di martedì 24 marzo 2026, ore 10:49.
+(26) - +94.85, (+0.15) - di mercoledì 25 marzo 2026, ore 09:33.
+(27) - +94.10, (-0.75) - di venerdì 27 marzo 2026, ore 09:44.
+(28) - +94.90, (+0.80) - di martedì 31 marzo 2026, ore 09:08.
+(29) - +94.55, (-0.35) - di martedì 31 marzo 2026, ore 09:08.
+(30) - +94.70, (+0.15) - di mercoledì 1 aprile 2026, ore 10:25.
+(31) - +95.00, (+0.30) - di giovedì 2 aprile 2026, ore 08:50.
+(32) - +94.60, (-0.40) - di mercoledì 8 aprile 2026, ore 12:19.
+(33) - +94.85, (+0.25) - di venerdì 10 aprile 2026, ore 07:41.
+(34) - +95.60, (+0.75) - di venerdì 10 aprile 2026, ore 07:41.
+(35) - +95.35, (-0.25) - di sabato 11 aprile 2026, ore 08:11.
+(36) - +94.50, (-0.85) - di domenica 12 aprile 2026, ore 07:34.
+(37) - +94.40, (-0.10) - di lunedì 13 aprile 2026, ore 07:42.
+(38) - +94.20, (-0.20) - di martedì 14 aprile 2026, ore 15:42.
+(39) - +94.10, (-0.10) - di mercoledì 15 aprile 2026, ore 11:48.
+(40) - +94.30, (+0.20) - di giovedì 16 aprile 2026, ore 07:42.
+(41) - +95.15, (+0.85) - di venerdì 17 aprile 2026, ore 09:07.
+(42) - +95.50, (+0.35) - di lunedì 20 aprile 2026, ore 09:11.
+(43) - +95.30, (-0.20) - di martedì 21 aprile 2026, ore 18:18.
+(44) - +96.25, (+0.95) - di mercoledì 22 aprile 2026, ore 09:26.
+(45) - +95.75, (-0.50) - di giovedì 23 aprile 2026, ore 07:25.
+(46) - +95.90, (+0.15) - di venerdì 24 aprile 2026, ore 08:12.
+(47) - +97.00, (+1.10) - di mercoledì 29 aprile 2026, ore 08:32.
+(48) - +97.55, (+0.55) - di giovedì 30 aprile 2026, ore 09:46.
+
+Informazioni statistiche sui valori registrati.
+Numero di records: 48
+Il valore massimo è +97.55 e compare 1 volte.
+	Data: giovedì 30 aprile 2026, ore 09:46;
+Il valore minimo è +93.35 e compare 1 volte.
+	Data: domenica 8 marzo 2026, ore 15:49;
+Media aritmetica dei valori: +94.85.
+Mediane: bassa +94.70, media +94.72, alta +94.75.
+Moda: +94.25.
+Deviazione standard: +0.77.
+Varianza: +0.60.
+
+Variazione totale dal primo all'ultimo record: +2.55
+Trend dei passaggi: 21 aumenti, 25 cali, 1 stabili.
+Picco di aumento: +1.10 registrato in data mercoledì 29 aprile 2026, ore 08:32.
+Picco di calo: -0.85 registrato in data domenica 12 aprile 2026, ore 07:34.
+Variazione media per step: +0.05
+Frequenza media di inserimento: ogni 1 giorni e 6 ore.
+Proiezione: andamento non in direzione dell'obiettivo (+90.00) o velocità nulla.
+
+Report prodotto il venerdì 1 maggio 2026, ore 12:14
+Applicazione: Quanto In Quanto (Quinqu) versione 3.3.1 del 12 aprile 2026

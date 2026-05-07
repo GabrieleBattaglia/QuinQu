@@ -1,0 +1,39 @@
+Nome del progetto: Test Quinqu 4
+Descrizione: solo per prova
+Data inizio: sabato 2 maggio 2026, ore 13:46
+Data fine: domenica 3 maggio 2026, ore 13:46
+Valore iniziale: +1.00
+Valore obiettivo: +100.00
+Tempo scaduto: raggiunto il 0.07% dell'obiettivo
+
+Registro dei valori:
+(1) - +1.00, (inizio) - di sabato 2 maggio 2026, ore 13:46.
+(2) - +3.00, (+2.00) - di sabato 2 maggio 2026, ore 13:47.
+(3) - +3.11, (+0.11) - di sabato 2 maggio 2026, ore 13:47.
+(4) - +3.02, (-0.09) - di sabato 2 maggio 2026, ore 13:47.
+(5) - +0.35, (-2.67) - di sabato 2 maggio 2026, ore 13:48.
+(6) - +1.07, (+0.72) - di sabato 2 maggio 2026, ore 13:48.
+
+Informazioni statistiche sui valori registrati.
+Numero di records: 6
+Il valore massimo è +3.11 e compare 1 volte.
+	Data: sabato 2 maggio 2026, ore 13:47;
+Il valore minimo è +0.35 e compare 1 volte.
+	Data: sabato 2 maggio 2026, ore 13:48;
+Media aritmetica dei valori: +1.93.
+Mediane: bassa +1.07, media +2.04, alta +3.00.
+Moda: +1.00.
+Deviazione standard: +1.25.
+Varianza: +1.57.
+
+Variazione totale dal primo all'ultimo record: +0.07
+Trend dei passaggi: 3 aumenti, 2 cali, 0 stabili.
+Picco di aumento: +2.00 registrato in data sabato 2 maggio 2026, ore 13:47.
+Picco di calo: -2.67 registrato in data sabato 2 maggio 2026, ore 13:48.
+Variazione media per step: +0.01
+Frequenza media di inserimento: ogni 0 giorni e 0 ore.
+Proiezione: mantenendo questa velocità, l'obiettivo (+100.00) potrebbe essere raggiunto il martedì 5 maggio 2026, ore 07:46.
+Tempo a disposizione scaduto per calcolare il progresso giornaliero necessario.
+
+Report prodotto il domenica 3 maggio 2026, ore 19:21
+Applicazione: Quanto In Quanto (Quinqu) versione 4.1.0 del 10 marzo 2026

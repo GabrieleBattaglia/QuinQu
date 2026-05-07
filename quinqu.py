@@ -10,7 +10,7 @@ import datetime as dt
 from fractions import Fraction as frac
 from GBUtils import dgt, Acusticator, sonify, menu
 
-VERSIONE = "4.1.0 del 10 marzo 2026"
+VERSIONE = "4.1.1 del 10 marzo 2026"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
@@ -196,6 +196,16 @@ def Humanize(d):
     mesi = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
     return f"{giorni[d.weekday()]} {d.day} {mesi[d.month - 1]} {d.year}, ore {d.hour:02d}:{d.minute:02d}"
 
+def StampaTabellino(vi, vc, vi_id, ob):
+    v_sorted = sorted([vi, vc, vi_id, ob])
+    s = "Tabellino di marcia: "
+    for i in range(len(v_sorted)):
+        s += f"{v_sorted[i]:+.2f}"
+        if i < len(v_sorted) - 1:
+            diff = v_sorted[i+1] - v_sorted[i]
+            s += f" < {diff:+.2f} < "
+    print(s)
+
 def VPTempo(stato, show=False):
     datainizio = stato["datainizio"]
     datafine = stato["datafine"]
@@ -283,7 +293,7 @@ def Cancelladato(stato):
         print("Il registro è vuoto.")
         return stato
         
-    valore = dgt(prompt="\nInserisci il valore che vuoi cancellare:> ", kind="f", fmin=0.0, fmax=1000.0)
+    valore = dgt(prompt="Inserisci il valore che vuoi cancellare:> ", kind="f", fmin=0.0, fmax=1000.0)
     ricerca = [k for k, v in valori.items() if v == valore]
     
     if not ricerca:
@@ -324,7 +334,7 @@ def Cancelladato(stato):
 
 def Nuovodato(stato):
     valori = stato["valori"]
-    valore = dgt(prompt="\nInserisci il valore da registrare:> ", kind="f")
+    valore = dgt(prompt="Inserisci il valore da registrare:> ", kind="f")
     Acusticator(SUONO["dato"], kind=1, sync=True)
     
     listavalori = list(valori.values())
@@ -376,6 +386,8 @@ def Nuovodato(stato):
         print(f"Il valore inserito è {giudizio} a quello utile di {abs(diff_ideale):.2f} (deviazione {perc_diff_ideale:+.2f}%).")
     else:
         print("Il valore inserito è esattamente in pari con la tabella di marcia ideale.")
+        
+    StampaTabellino(valoreiniziale, valore, valore_ideale, obiettivo)
     
     percentuale_obiettivo = VPObiettivo(stato)
     percentuale_tempo = VPTempo(stato)
@@ -685,7 +697,6 @@ def main():
 
     print("Digita M per leggere il menù dell'App")
     while True:
-        print(f"\n[ Obiettivo attivo: {stato['prjnome']} ]")
         attesa = menu(d=main_menu, p="CMD> ", show=False)
         if attesa is None:
             continue
@@ -704,7 +715,7 @@ def main():
                 Salva(progetti)
                 if len(progetti) == 0:
                     print("Tutti gli obiettivi sono stati conclusi.")
-                    attesa_nuovo = dgt(prompt="\nVuoi creare un nuovo obiettivo? (S|N)> ", kind="s", smin=1, smax=1, default="s").lower()
+                    attesa_nuovo = dgt(prompt="Vuoi creare un nuovo obiettivo? (S|N)> ", kind="s", smin=1, smax=1, default="s").lower()
                     if attesa_nuovo == "s":
                         nuovo_stato = Inizializzazione()
                         progetti["0"] = nuovo_stato
