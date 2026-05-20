@@ -10,23 +10,49 @@ import datetime as dt
 from fractions import Fraction as frac
 from GBUtils import dgt, Acusticator, sonify, menu
 
-VERSIONE = "4.1.1 del 10 marzo 2026"
+VERSIONE = "4.1.3 del 20 maggio 2026"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
 
-SUONO = {
-    "dato": ["a5", .070, 0, .4, "c6", .070, 0, .4, "g6", .150, 0, .4],
-    "sopra": ['e4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'b4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4],
-    "mezzo": ['g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4],
-    "sotto": ['b4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'g4', 0.035, 0, 0.4, 'p', 0.035, 0, 0.4, 'e4', 0.035, 0, 0.4],
-    "startup": ["c5", 0.1, 0, 0.4, "e5", 0.1, 0, 0.4, "g5", 0.1, 0, 0.4, "c6", 0.3, 0, 0.4],
-    "shutdown": ["c6", 0.1, 0, 0.4, "g5", 0.1, 0, 0.4, "e5", 0.1, 0, 0.4, "c5", 0.3, 0, 0.4],
-    "save": ["g5", 0.05, 0, 0.4, "b5", 0.1, 0, 0.4],
-    "delete": ["e4", 0.1, 0, 0.4, "c4", 0.2, 0, 0.4],
-    "reset": ["c4", 0.1, 0, 0.4, "c3", 0.4, 0, 0.4],
-    "concluso": ["c5", 0.15, 0, 0.4, "e5", 0.15, 0, 0.4, "g5", 0.15, 0, 0.4, "c6", 0.15, 0, 0.4, "e6", 0.15, 0, 0.4, "g6", 0.4, 0, 0.4]
+SUONO_FALLBACK = {
+    "quinqu_startup": ["c5", 0.08, 0.0, 0.4, "e5", 0.08, 0.0, 0.4, "g5", 0.08, 0.0, 0.4, "c6", 0.25, 0.0, 0.4],
+    "quinqu_shutdown": ["c6", 0.08, 0.0, 0.4, "g5", 0.08, 0.0, 0.4, "e5", 0.08, 0.0, 0.4, "c5", 0.25, 0.0, 0.4],
+    "salita_ideale": ["c4.g4", 0.3, 0.0, 0.4],
+    "discesa_ideale": ["g4.c4", 0.3, 0.0, 0.4],
+    "in_linea_ideale": ["e5", 0.15, 0.0, 0.4, "p", 0.05, 0.0, 0.4, "e5", 0.15, 0.0, 0.4],
+    "convalida0": ["c4", 0.1, 0.0, 0.4, "f6", 0.1, 0.0, 0.4, "d#5", 0.1, 0.0, 0.4, "g#6", 0.4, 0.0, 0.4],
+    "vittoria": ["f#4", 0.16, 0.0, 0.3, "c#5", 0.16, 0.0, 0.3, "e4", 0.16, 0.0, 0.3, "b5", 0.28, 0.0, 0.3],
+    "cancellato": ["b2.g#2", 0.22, 0.0, 0.4, "p", 0.06, 0.0, 0.4, "a2", 0.08, 0.0, 0.4],
+    "written_ok": ["c4", 0.04, 0.0, 0.4, "c4.b4", 0.04, 0.0, 0.4],
+    "rifiuto": ["g3.f3", 0.5, 0.0, 0.4, "p", 0.04, 0.0, 0.4, "g7", 0.02, 0.0, 0.4],
+    "rifiutato": ["g3.d3", 0.18, 0.0, 0.4, "f3.c3", 0.18, 0.0, 0.4, "d#3.a#2", 0.18, 0.0, 0.4],
+    "campanellino": ["c8.c#8", 0.5, 0.0, 0.4],
+    "mostra": ["f2", 0.2, 0.0, 0.4, "g#2", 0.2, 0.0, 0.4, "d2", 0.2, 0.0, 0.4],
+    "lista": ["d4.a6", 0.1, 0.0, 0.4],
+    "controllo_ok": ["d4", 0.05, 0.0, 0.4, "f6", 0.05, 0.0, 0.4]
 }
+
+def RiproduciEffetto(nome_preset, base_vol=0.4, sync=True):
+    try:
+        import GBUtils
+        db_path = os.path.join(os.path.dirname(os.path.abspath(GBUtils.__file__)), "Acu_Collection.json")
+        if os.path.exists(db_path):
+            with open(db_path, "r", encoding="utf-8") as f:
+                db = json.load(f)
+            if nome_preset in db:
+                preset = db[nome_preset]
+                score_flat = []
+                for q in preset['score']:
+                    note, dur, pan, vol_delta = q
+                    vol = max(0.0, min(1.0, base_vol + vol_delta))
+                    score_flat.extend([note, dur, pan, vol])
+                Acusticator(score_flat, kind=preset['kind'], adsr=preset['adsr'], sync=sync)
+                return
+    except Exception:
+        pass
+    if nome_preset in SUONO_FALLBACK:
+        Acusticator(SUONO_FALLBACK[nome_preset], kind=1, sync=sync)
 
 main_menu = {
     "nuovo": "Nuova registrazione del valore",
@@ -63,7 +89,7 @@ def Salva(progetti):
             }
         with open(RECORDNAME, "w", encoding="utf-8") as f:
             json.dump(progetti_json, f, indent=4)
-        Acusticator(SUONO["save"], kind=1, sync=True)
+        RiproduciEffetto("written_ok")
         print(f"\n{RECORDNAME} salvato.")
     except Exception as e:
         print(f"Errore durante il salvataggio: {e}")
@@ -186,7 +212,8 @@ def Inizializzazione():
 def Reset(progetti):
     attesa = dgt(prompt="ATTENZIONE! Sei sicuro di voler cancellare TUTTI i progetti?\nL'operazione è irreversibile! Digita 'sicuro'> ", kind="s", smin=0, smax=12, default="n")
     if attesa == "sicuro":
-        Acusticator(SUONO["reset"], kind=1, sync=True)
+        RiproduciEffetto("rifiutato")
+        RiproduciEffetto("cancellato")
         return {"0": Inizializzazione()}, "0"
     print("Non tocco nulla.")
     return progetti, None
@@ -211,6 +238,7 @@ def VPTempo(stato, show=False):
     datafine = stato["datafine"]
     durata = datafine - datainizio
     if show:
+        RiproduciEffetto("mostra")
         print("\nProgressi sulla linea temporale del tuo progetto di controllo del valore.")
         print(f"Progetto iniziato in data {Humanize(datainizio)} terminerà il {Humanize(datafine)}, per un totale di {durata.days} giorni")
         
@@ -238,6 +266,7 @@ def VPObiettivo(stato, show=False):
     obiettivo = stato["obiettivo"]
     
     if show:
+        RiproduciEffetto("mostra")
         print("\nProgressi ottenuti rispetto all'obiettivo prefissato:")
     
     if not valori:
@@ -271,8 +300,11 @@ def VRegistro(stato):
     valori = stato["valori"]
     print("\nDati presenti nel registro dei valori:")
     if not valori:
+        RiproduciEffetto("rifiuto")
         print("Il registro è vuoto.")
         return
+        
+    RiproduciEffetto("lista")
         
     contatore = 1
     differenza = 0.0
@@ -290,6 +322,7 @@ def VRegistro(stato):
 def Cancelladato(stato):
     valori = stato["valori"]
     if not valori:
+        RiproduciEffetto("rifiuto")
         print("Il registro è vuoto.")
         return stato
         
@@ -297,16 +330,18 @@ def Cancelladato(stato):
     ricerca = [k for k, v in valori.items() if v == valore]
     
     if not ricerca:
+        RiproduciEffetto("rifiuto")
         print("Non è stato trovato il valore specificato all'interno del registro")
         return stato
     elif len(ricerca) == 1:
         chiave = ricerca[0]
         if chiave == min(valori.keys()):
+            RiproduciEffetto("rifiuto")
             print("Impossibile eliminare il valore iniziale del progetto.")
             return stato
         print(f"Trovato il valore {valore}, registrato in data: {Humanize(chiave)}.")
         del valori[chiave]
-        Acusticator(SUONO["delete"], kind=1, sync=True)
+        RiproduciEffetto("cancellato")
         print(f"Dato eliminato, ora il registro contiene {len(valori)} records")
         return stato
         
@@ -320,35 +355,37 @@ def Cancelladato(stato):
         
     scelta = dgt(prompt="Elemento da cancellare? (0 per annullare)> ", kind="i", imin=0, imax=len(multi))
     if scelta == 0:
+        RiproduciEffetto("campanellino")
         return stato
         
     chiave = multi[scelta]
     if chiave == min(valori.keys()):
+        RiproduciEffetto("rifiuto")
         print("Impossibile eliminare il valore iniziale del progetto.")
         return stato
         
     del valori[chiave]
-    Acusticator(SUONO["delete"], kind=1, sync=True)
+    RiproduciEffetto("cancellato")
     print(f"Dato eliminato. Ora il registro contiene {len(valori)} records.")
     return stato
 
 def Nuovodato(stato):
     valori = stato["valori"]
     valore = dgt(prompt="Inserisci il valore da registrare:> ", kind="f")
-    Acusticator(SUONO["dato"], kind=1, sync=True)
+    RiproduciEffetto("convalida0")
     
     listavalori = list(valori.values())
     if listavalori:
         massimo = max(listavalori)
         minimo = min(listavalori)
         if valore > massimo:
-            Acusticator(SUONO["sopra"], kind=1, sync=True)
+            RiproduciEffetto("vittoria", base_vol=0.2)
             r = f"Nuovo record: {valore:+.2f} supera di {valore-massimo:+.2f} rispetto al massimo {massimo:+.2f}."
         elif valore < minimo:
-            Acusticator(SUONO["sotto"], kind=1, sync=True)
-            r = f"Nuovo record: {valore:+.2f} è inferiore di {minimo-valore:+.2f} rispetto al minimo {minimo:+.2f}."
+            RiproduciEffetto("rifiutato")
+            r = f"Nuovo record: {valore:+.2f} è inferior di {minimo-valore:+.2f} rispetto al minimo {minimo:+.2f}."
         else:
-            Acusticator(SUONO["mezzo"], kind=1, sync=True)
+            RiproduciEffetto("controllo_ok")
             r = f"Nuovo record nell'intervallo fra minimo {minimo:+.2f} < {valore-minimo:+.2f} < {valore:+.2f} < {massimo-valore:+.2f} < {massimo:+.2f}."
         print(r)
         
@@ -376,10 +413,13 @@ def Nuovodato(stato):
 
     if abs(diff_ideale) < 0.01:
         giudizio = "perfettamente in linea"
+        RiproduciEffetto("in_linea_ideale")
     elif diff_ideale < 0:
         giudizio = "inferiore"
+        RiproduciEffetto("discesa_ideale")
     else:
         giudizio = "superiore"
+        RiproduciEffetto("salita_ideale")
 
     print(f"Valore ideale utile per completare in tempo: {valore_ideale:.2f}.")
     if abs(diff_ideale) >= 0.01:
@@ -412,6 +452,7 @@ def SelezionaProgetto(progetti):
     if len(progetti) < 10:
         opzioni["n"] = "-- Crea Nuovo Obiettivo --"
                 
+    RiproduciEffetto("lista")
     print("\nObiettivi disponibili:")
     while True:
         scelta = menu(d=opzioni, p="Scegli obiettivo: ", show=True, keyslist=True)
@@ -439,7 +480,9 @@ def Cambiafine(stato):
         nuova_data = DigitaData()
         if nuova_data > stato["datainizio"]:
             stato["datafine"] = nuova_data
+            RiproduciEffetto("roger_cw_conferma")
             break
+        RiproduciEffetto("rifiuto")
         print("La data di fine deve essere successiva a quella di inizio. Riprova.")
     return stato
 
@@ -450,6 +493,7 @@ def VConfronto(stato):
     obiettivo = stato["obiettivo"]
     
     if not valori:
+        RiproduciEffetto("rifiuto")
         print("Dati insufficienti per un confronto.")
         return
         
@@ -470,10 +514,13 @@ def VConfronto(stato):
     tolleranza = 10.0
     if abs(ot - op) <= tolleranza:
         oa = "progressione uniforme, molto bene!"
+        RiproduciEffetto("controllo_ok")
     elif ot < op - tolleranza:
         oa = "variazione del valore troppo rapida, rallentare."
+        RiproduciEffetto("campanellino")
     else:
         oa = "variazione del valore troppo lenta, accelerare."
+        RiproduciEffetto("rifiutato")
         
     print(f"\nProgressi: tempo {ot:+.2f}% valore {op:+.2f}% (T={od:+.2f}%) {oa}")
 
@@ -481,9 +528,11 @@ def Infostatistiche(stato):
     valori = stato["valori"]
     obiettivo = stato["obiettivo"]
     if len(valori) < 4:
+        RiproduciEffetto("rifiuto")
         print("Sono stati registrati pochi valori per mostrare le statistiche (minimo 4).")
         return
         
+    RiproduciEffetto("mostra")
     print("\nInformazioni statistiche sui valori registrati.")
     l = list(valori.values())
     print("Numero di records:", len(l))
@@ -582,7 +631,7 @@ def ConcludiProgetto(stato):
     obiettivo = stato["obiettivo"]
     
     print("\nIl progetto è concluso. Creazione del report finale...")
-    Acusticator(SUONO["concluso"], kind=1, sync=True)
+    RiproduciEffetto("vittoria")
     
     if not valori:
         valoreiniziale = 0
@@ -650,7 +699,7 @@ def ConcludiProgetto(stato):
     return True
 
 def main():
-    Acusticator(SUONO["startup"], kind=1, sync=True)
+    RiproduciEffetto("quinqu_startup")
     print(f"Welcome a {AUTORE}!\nApplicazione: Quanto In Quanto (Quinqu)\nVersione {VERSIONE}\nUn'App per tenere traccia dei progressi in un obiettivo,\nesprimibile con un valore numerico, da raggiungere in un determinato arco temporale.")
     print("Controllo la presenza di una registrazione salvata...")
     
@@ -659,12 +708,14 @@ def main():
         progetti = {}
         
     if not progetti:
+        RiproduciEffetto("campanellino")
         print("Nessun obiettivo presente. Creiamone uno.")
         nuovo_stato = Inizializzazione()
         progetti["0"] = nuovo_stato
         id_corrente = "0"
         Salva(progetti)
     else:
+        RiproduciEffetto("controllo_ok")
         if len(progetti) == 1:
             id_corrente = list(progetti.keys())[0]
             print(f"Unico obiettivo trovato e caricato: {progetti[id_corrente]['prjnome']}")
@@ -705,7 +756,7 @@ def main():
         if attesa == "menu":
             VMenu()
         elif attesa == "esci":
-            Acusticator(SUONO["shutdown"], kind=1, sync=True)
+            RiproduciEffetto("quinqu_shutdown")
             Salva(progetti)
             break
         elif attesa == "nuovo":
@@ -738,6 +789,7 @@ def main():
                 print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
                 sonify(dati, duration=durata, ptm=True, vol=0.3)
             else:
+                RiproduciEffetto("rifiuto")
                 print("\nNessun valore registrato per la riproduzione.")
         elif attesa == "suono_np":
             if len(stato["valori"]) > 0:
@@ -746,6 +798,7 @@ def main():
                 print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
                 sonify(dati, duration=durata, ptm=False, vol=0.3)
             else:
+                RiproduciEffetto("rifiuto")
                 print("\nNessun valore registrato per la riproduzione.")
         elif attesa == "suono_d":
             if len(stato["valori"]) > 0:
@@ -754,6 +807,7 @@ def main():
                 print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
                 sonify(dati, duration=durata, ptm=True, vol=0.3)
             else:
+                RiproduciEffetto("rifiuto")
                 print("\nNessun valore registrato per la riproduzione.")
         elif attesa == "progresso_ob":
             VPObiettivo(stato, show=True)
@@ -775,19 +829,22 @@ def main():
             nuovo_ob = dgt(prompt=f"Obiettivo attuale: {stato['obiettivo']}, nuovo? >", kind="f", fmin=0.0, fmax=1000.0)
             if nuovo_ob != stato['valori'][min(stato['valori'].keys())]:
                 stato['obiettivo'] = nuovo_ob
+                RiproduciEffetto("roger_cw_conferma")
                 print("Nuovo obiettivo impostato.")
             else:
+                RiproduciEffetto("rifiuto")
                 print("L'obiettivo non può coincidere con il valore iniziale.")
         elif attesa == "salva":
             Salva(progetti)
         elif attesa == "cambia":
             id_corrente = SelezionaProgetto(progetti)
             stato = progetti[id_corrente]
+            RiproduciEffetto("campanellino")
             print(f"Passato a {stato['prjnome']}.")
         elif attesa == "elimina":
             attesa_del = dgt(prompt=f"Vuoi davvero eliminare l'obiettivo {stato['prjnome']}? (sicuro)> ", kind="s", smin=0, smax=12, default="n")
             if attesa_del == "sicuro":
-                Acusticator(SUONO["delete"], kind=1, sync=True)
+                RiproduciEffetto("cancellato")
                 del progetti[id_corrente]
                 if len(progetti) == 0:
                     print("Tutti gli obiettivi sono stati eliminati.")
@@ -800,8 +857,10 @@ def main():
                 Salva(progetti)
                 print(f"Obiettivo eliminato. Passato a {stato['prjnome']}.")
             else:
+                RiproduciEffetto("campanellino")
                 print("Operazione annullata.")
         else:
+            RiproduciEffetto("rifiuto")
             print(f"\n{attesa} non è un comando valido.")
             VMenu()
 
