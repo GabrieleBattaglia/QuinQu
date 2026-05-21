@@ -10,7 +10,7 @@ import datetime as dt
 from fractions import Fraction as frac
 from GBUtils import dgt, Acusticator, sonify, menu
 
-VERSIONE = "4.1.3 del 20 maggio 2026"
+VERSIONE = "4.2.1 del 21 maggio 2026"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
@@ -56,6 +56,7 @@ def RiproduciEffetto(nome_preset, base_vol=0.4, sync=True):
 
 main_menu = {
     "nuovo": "Nuova registrazione del valore",
+    "apri": "Apri un nuovo obiettivo",
     "cancella": "Cancella un valore",
     "fine": "Modifica la data di fine progetto",
     "obiettivo": "Modifica l'obiettivo",
@@ -729,6 +730,7 @@ def main():
     percentuale_tempo = VPTempo(stato)
     if percentuale_obiettivo >= 100 or percentuale_tempo >= 100:
         if ConcludiProgetto(stato):
+            prj_concluso = stato["prjnome"]
             del progetti[id_corrente]
             Salva(progetti)
             if len(progetti) == 0:
@@ -742,8 +744,13 @@ def main():
                     Salva(progetti)
                 else:
                     return
-            else:
+            elif len(progetti) == 1:
                 id_corrente = list(progetti.keys())[0]
+                stato = progetti[id_corrente]
+                print(f"\nObiettivo '{prj_concluso}' concluso. Rimane un solo obiettivo attivo: '{stato['prjnome']}', che viene caricato automaticamente.")
+            else:
+                print(f"\nObiettivo '{prj_concluso}' concluso.")
+                id_corrente = SelezionaProgetto(progetti)
                 stato = progetti[id_corrente]
 
     print("Digita M per leggere il menù dell'App")
@@ -762,6 +769,7 @@ def main():
         elif attesa == "nuovo":
             stato, concluso = Nuovodato(stato)
             if concluso:
+                prj_concluso = stato["prjnome"]
                 del progetti[id_corrente]
                 Salva(progetti)
                 if len(progetti) == 0:
@@ -775,8 +783,13 @@ def main():
                         Salva(progetti)
                     else:
                         break
-                else:
+                elif len(progetti) == 1:
                     id_corrente = list(progetti.keys())[0]
+                    stato = progetti[id_corrente]
+                    print(f"\nObiettivo '{prj_concluso}' concluso. Rimane un solo obiettivo attivo: '{stato['prjnome']}', che viene caricato automaticamente.")
+                else:
+                    print(f"\nObiettivo '{prj_concluso}' concluso.")
+                    id_corrente = SelezionaProgetto(progetti)
                     stato = progetti[id_corrente]
         elif attesa == "cancella":
             stato = Cancelladato(stato)
@@ -841,21 +854,44 @@ def main():
             stato = progetti[id_corrente]
             RiproduciEffetto("campanellino")
             print(f"Passato a {stato['prjnome']}.")
+        elif attesa == "apri":
+            if len(progetti) >= 10:
+                RiproduciEffetto("rifiuto")
+                print("Numero massimo di obiettivi raggiunto (massimo 10).")
+            else:
+                for i in range(10):
+                    if str(i) not in progetti:
+                        nuovo_id = str(i)
+                        break
+                progetti[nuovo_id] = Inizializzazione()
+                id_corrente = nuovo_id
+                stato = progetti[id_corrente]
+                Salva(progetti)
+                print(f"Creato e caricato il nuovo obiettivo: {stato['prjnome']}")
         elif attesa == "elimina":
             attesa_del = dgt(prompt=f"Vuoi davvero eliminare l'obiettivo {stato['prjnome']}? (sicuro)> ", kind="s", smin=0, smax=12, default="n")
             if attesa_del == "sicuro":
                 RiproduciEffetto("cancellato")
+                prj_eliminato = stato["prjnome"]
                 del progetti[id_corrente]
                 if len(progetti) == 0:
                     print("Tutti gli obiettivi sono stati eliminati.")
                     nuovo_stato = Inizializzazione()
                     progetti["0"] = nuovo_stato
                     id_corrente = "0"
-                else:
+                    stato = progetti[id_corrente]
+                    Salva(progetti)
+                    print(f"Obiettivo eliminato. Passato a {stato['prjnome']}.")
+                elif len(progetti) == 1:
                     id_corrente = list(progetti.keys())[0]
-                stato = progetti[id_corrente]
-                Salva(progetti)
-                print(f"Obiettivo eliminato. Passato a {stato['prjnome']}.")
+                    stato = progetti[id_corrente]
+                    Salva(progetti)
+                    print(f"Obiettivo '{prj_eliminato}' eliminato. Passato all'unico rimasto: {stato['prjnome']}.")
+                else:
+                    id_corrente = SelezionaProgetto(progetti)
+                    stato = progetti[id_corrente]
+                    Salva(progetti)
+                    print(f"Obiettivo '{prj_eliminato}' eliminato. Passato a {stato['prjnome']}.")
             else:
                 RiproduciEffetto("campanellino")
                 print("Operazione annullata.")
