@@ -1,0 +1,56 @@
+Nome del progetto: Test-Suoni
+Descrizione: nessuna
+Data inizio: giovedì 21 maggio 2026, ore 13:40
+Data fine: giovedì 21 maggio 2026, ore 14:41
+Valore iniziale: +1.00
+Valore obiettivo: +100.00
+Obiettivo raggiunto nel 10.44% del tempo a disposizione
+
+Registro dei valori:
+(1) - +1.00, (inizio) - di giovedì 21 maggio 2026, ore 13:40.
+(2) - +5.00, (+4.00) - di giovedì 21 maggio 2026, ore 13:41.
+(3) - +3.00, (-2.00) - di giovedì 21 maggio 2026, ore 13:41.
+(4) - +3.40, (+0.40) - di giovedì 21 maggio 2026, ore 13:42.
+(5) - +3.20, (-0.20) - di giovedì 21 maggio 2026, ore 13:42.
+(6) - +4.20, (+1.00) - di giovedì 21 maggio 2026, ore 13:42.
+(7) - +5.30, (+1.10) - di giovedì 21 maggio 2026, ore 13:43.
+(8) - +8.00, (+2.70) - di giovedì 21 maggio 2026, ore 13:43.
+(9) - +7.90, (-0.10) - di giovedì 21 maggio 2026, ore 13:43.
+(10) - +7.60, (-0.30) - di giovedì 21 maggio 2026, ore 13:43.
+(11) - +12.00, (+4.40) - di giovedì 21 maggio 2026, ore 13:44.
+(12) - +9.40, (-2.60) - di giovedì 21 maggio 2026, ore 13:44.
+(13) - +5.40, (-4.00) - di giovedì 21 maggio 2026, ore 13:44.
+(14) - +9.20, (+3.80) - di giovedì 21 maggio 2026, ore 13:44.
+(15) - +24.00, (+14.80) - di giovedì 21 maggio 2026, ore 13:45.
+(16) - +34.00, (+10.00) - di giovedì 21 maggio 2026, ore 13:45.
+(17) - +45.00, (+11.00) - di giovedì 21 maggio 2026, ore 13:45.
+(18) - +67.00, (+22.00) - di giovedì 21 maggio 2026, ore 13:45.
+(19) - +43.00, (-24.00) - di giovedì 21 maggio 2026, ore 13:45.
+(20) - +33.00, (-10.00) - di giovedì 21 maggio 2026, ore 13:45.
+(21) - +70.00, (+37.00) - di giovedì 21 maggio 2026, ore 13:46.
+(22) - +89.00, (+19.00) - di giovedì 21 maggio 2026, ore 13:46.
+(23) - +102.00, (+13.00) - di giovedì 21 maggio 2026, ore 13:46.
+
+Informazioni statistiche sui valori registrati.
+Numero di records: 23
+Il valore massimo è +102.00 e compare 1 volte.
+	Data: giovedì 21 maggio 2026, ore 13:46;
+Il valore minimo è +1.00 e compare 1 volte.
+	Data: giovedì 21 maggio 2026, ore 13:40;
+Media aritmetica dei valori: +25.72.
+Mediane: bassa +9.20, media +9.20, alta +9.20.
+Moda: +1.00.
+Deviazione standard: +30.02.
+Varianza: +901.13.
+
+Variazione totale dal primo all'ultimo record: +101.00
+Trend dei passaggi: 14 aumenti, 8 cali, 0 stabili.
+Picco di aumento: +37.00 registrato in data giovedì 21 maggio 2026, ore 13:46.
+Picco di calo: -24.00 registrato in data giovedì 21 maggio 2026, ore 13:45.
+Variazione media per step: +4.59
+Frequenza media di inserimento: ogni 0 giorni e 0 ore.
+Proiezione: andamento non in direzione dell'obiettivo (+100.00) o velocità nulla.
+Tabella di marcia: occorre acquisire -52.72 al giorno per completare in tempo.
+
+Report prodotto il giovedì 21 maggio 2026, ore 13:46
+Applicazione: Quanto In Quanto (Quinqu) versione 4.2.0 del 21 maggio 2026
