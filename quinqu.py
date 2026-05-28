@@ -7,10 +7,11 @@ import json
 import pickle
 import statistics
 import datetime as dt
+import numpy as np
 from fractions import Fraction as frac
 from GBUtils import dgt, Acusticator, sonify, menu
 
-VERSIONE = "4.2.1 del 21 maggio 2026"
+VERSIONE = "4.3.0 del 26 maggio 2026"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
@@ -297,6 +298,32 @@ def VPObiettivo(stato, show=False):
         
     return percentuale_obiettivo
 
+def CalcolaProiezione(valori, obiettivo, n_punti=None):
+    date_ordinate = sorted(valori.keys())
+    if len(date_ordinate) < 2:
+        return None, None
+    if n_punti is not None:
+        date_ordinate = date_ordinate[-n_punti:]
+        if len(date_ordinate) < 2:
+            return None, None
+    x = [d.timestamp() for d in date_ordinate]
+    y = [valori[d] for d in date_ordinate]
+    try:
+        slope, _ = np.polyfit(x, y, 1)
+    except Exception:
+        return None, None
+    if slope == 0:
+        return None, 0.0
+    ultimo_valore = y[-1]
+    da_fare = obiettivo - ultimo_valore
+    velocita_giornaliera = slope * 86400
+    secondi_mancanti = da_fare / slope
+    if secondi_mancanti > 0:
+        data_stimata = date_ordinate[-1] + dt.timedelta(seconds=secondi_mancanti)
+        return data_stimata, velocita_giornaliera
+    else:
+        return None, velocita_giornaliera
+
 def VRegistro(stato):
     valori = stato["valori"]
     print("\nDati presenti nel registro dei valori:")
@@ -430,6 +457,23 @@ def Nuovodato(stato):
         
     StampaTabellino(valoreiniziale, valore, valore_ideale, obiettivo)
     
+    data_stimata_glob, vel_glob = CalcolaProiezione(valori, obiettivo)
+    data_stimata_rec, vel_rec = CalcolaProiezione(valori, obiettivo, n_punti=5)
+    if data_stimata_glob:
+        print(f"Proiezione Storica (Globale):\n  Traguardo: {Humanize(data_stimata_glob)} (velocità: {vel_glob:+.2f}/giorno)")
+    else:
+        if vel_glob is not None:
+            print(f"Proiezione Storica (Globale):\n  Andamento non in direzione dell'obiettivo (velocità: {vel_glob:+.2f}/giorno)")
+        else:
+            print("Proiezione Storica (Globale):\n  Dati insufficienti (minimo 2 valori)")
+    if data_stimata_rec:
+        print(f"Proiezione Recente (ultimi 5 dati):\n  Traguardo: {Humanize(data_stimata_rec)} (velocità: {vel_rec:+.2f}/giorno)")
+    else:
+        if vel_rec is not None:
+            print(f"Proiezione Recente (ultimi 5 dati):\n  Andamento non in direzione dell'obiettivo (velocità: {vel_rec:+.2f}/giorno)")
+        else:
+            print("Proiezione Recente (ultimi 5 dati):\n  Dati insufficienti (minimo 2 valori)")
+            
     percentuale_obiettivo = VPObiettivo(stato)
     percentuale_tempo = VPTempo(stato)
     if percentuale_obiettivo >= 100 or percentuale_tempo >= 100:
@@ -556,6 +600,35 @@ def Infostatistiche(stato):
     print(f"Moda: {statistics.mode(l):+.2f}.")
     print(f"Deviazione standard: {statistics.stdev(l):+.2f}.")
     print(f"Varianza: {statistics.variance(l):+.2f}.")
+    dati_ordinati = sorted(valori.items(), key=lambda x: x[1])
+    indices = np.array_split(range(len(dati_ordinati)), 4)
+    print("\nSuddivisione in quartili per valore:")
+    for idx, idx_group in enumerate(indices, 1):
+        chunk = [dati_ordinati[i] for i in idx_group]
+        chunk_vals = [item[1] for item in chunk]
+        chunk_dates = [item[0] for item in chunk]
+        date_min = min(chunk_dates)
+        date_max = max(chunk_dates)
+        c_min = float(np.min(chunk_vals))
+        c_mean = float(np.mean(chunk_vals))
+        c_max = float(np.max(chunk_vals))
+        print(f"\tQ{idx}: {Humanize(date_min)} - {Humanize(date_max)}")
+        print(f"\tmin: {c_min:+.2f}, med: {c_mean:+.2f}, max: {c_max:+.2f}")
+
+    dati_cronologici = sorted(valori.items(), key=lambda x: x[0])
+    indices_c = np.array_split(range(len(dati_cronologici)), 4)
+    print("\nSuddivisione in quartili per tempo:")
+    for idx, idx_group in enumerate(indices_c, 1):
+        chunk = [dati_cronologici[i] for i in idx_group]
+        chunk_vals = [item[1] for item in chunk]
+        chunk_dates = [item[0] for item in chunk]
+        date_min = min(chunk_dates)
+        date_max = max(chunk_dates)
+        c_min = float(np.min(chunk_vals))
+        c_mean = float(np.mean(chunk_vals))
+        c_max = float(np.max(chunk_vals))
+        print(f"\tQ{idx} (Tempo): {Humanize(date_min)} - {Humanize(date_max)}")
+        print(f"\tmin: {c_min:+.2f}, med: {c_mean:+.2f}, max: {c_max:+.2f}")
 
     date_ordinate = sorted(valori.keys())
     primo_valore = valori[date_ordinate[0]]
@@ -602,17 +675,22 @@ def Infostatistiche(stato):
         ore_media = (media_tempo_sec % 86400) // 3600
         print(f"Frequenza media di inserimento: ogni {int(giorni_media)} giorni e {int(ore_media)} ore.")
 
-    if variazione_totale != 0:
-        tempo_trascorso = (date_ordinate[-1] - date_ordinate[0]).total_seconds()
-        velocita = variazione_totale / tempo_trascorso if tempo_trascorso > 0 else 0
-        da_fare = obiettivo - ultimo_valore
-        
-        if velocita != 0 and (da_fare / velocita) > 0:
-            secondi_mancanti = da_fare / velocita
-            data_stimata = date_ordinate[-1] + dt.timedelta(seconds=secondi_mancanti)
-            print(f"Proiezione: mantenendo questa velocità, l'obiettivo ({obiettivo:+.2f}) potrebbe essere raggiunto il {Humanize(data_stimata)}.")
+    data_stimata_glob, vel_glob = CalcolaProiezione(valori, obiettivo)
+    data_stimata_rec, vel_rec = CalcolaProiezione(valori, obiettivo, n_punti=5)
+    if data_stimata_glob:
+        print(f"Proiezione Storica (Globale):\n  Traguardo: {Humanize(data_stimata_glob)} (velocità: {vel_glob:+.2f}/giorno)")
+    else:
+        if vel_glob is not None:
+            print(f"Proiezione Storica (Globale):\n  Andamento non in direzione dell'obiettivo (velocità: {vel_glob:+.2f}/giorno)")
         else:
-            print(f"Proiezione: andamento non in direzione dell'obiettivo ({obiettivo:+.2f}) o velocità nulla.")
+            print("Proiezione Storica (Globale):\n  Dati insufficienti (minimo 2 valori)")
+    if data_stimata_rec:
+        print(f"Proiezione Recente (ultimi 5 dati):\n  Traguardo: {Humanize(data_stimata_rec)} (velocità: {vel_rec:+.2f}/giorno)")
+    else:
+        if vel_rec is not None:
+            print(f"Proiezione Recente (ultimi 5 dati):\n  Andamento non in direzione dell'obiettivo (velocità: {vel_rec:+.2f}/giorno)")
+        else:
+            print("Proiezione Recente (ultimi 5 dati):\n  Dati insufficienti (minimo 2 valori)")
 
     oggi = dt.datetime.now().replace(microsecond=0)
     giorni_rimanenti = (stato["datafine"] - oggi).total_seconds() / 86400
