@@ -11,7 +11,7 @@ import numpy as np
 from fractions import Fraction as frac
 from GBUtils import dgt, Acusticator, sonify, menu
 
-VERSIONE = "4.3.0 del 26 maggio 2026"
+VERSIONE = "4.3.1 del 19 luglio 2026"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
@@ -411,7 +411,7 @@ def Nuovodato(stato):
             r = f"Nuovo record: {valore:+.2f} supera di {valore-massimo:+.2f} rispetto al massimo {massimo:+.2f}."
         elif valore < minimo:
             RiproduciEffetto("rifiutato")
-            r = f"Nuovo record: {valore:+.2f} è inferior di {minimo-valore:+.2f} rispetto al minimo {minimo:+.2f}."
+            r = f"Nuovo record: {valore:+.2f} è inferiore di {minimo-valore:+.2f} rispetto al minimo {minimo:+.2f}."
         else:
             RiproduciEffetto("controllo_ok")
             r = f"Nuovo record nell'intervallo fra minimo {minimo:+.2f} < {valore-minimo:+.2f} < {valore:+.2f} < {massimo-valore:+.2f} < {massimo:+.2f}."
