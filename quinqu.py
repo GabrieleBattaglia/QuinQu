@@ -1,17 +1,19 @@
 # Quanto in Quanto (Quinqu). Data di concepimento 10/02/2024.
 # Programma per seguire e salvare i progressi nel raggiungimento di un obiettivo il cui valore possa essere espresso in numeri
 
-import os
-import sys
+import datetime as dt
 import json
+import os
 import pickle
 import statistics
-import datetime as dt
-import numpy as np
+import sys
 from fractions import Fraction as frac
-from GBUtils import dgt, Acusticator, sonify, menu
 
-VERSIONE = "4.3.1 del 19 luglio 2026"
+import numpy as np
+
+from GBUtils import Acusticator, dgt, menu, sonify
+
+VERSIONE = "4.4.0 del 27 luglio 2026"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
@@ -81,12 +83,18 @@ def Salva(progetti):
     try:
         progetti_json = {}
         for pid, p in progetti.items():
+            valori_ser = {}
+            for k, v in p["valori"].items():
+                if isinstance(v, list):
+                    valori_ser[k.isoformat()] = v
+                else:
+                    valori_ser[k.isoformat()] = [v, ""]
             progetti_json[pid] = {
                 "prjnome": p["prjnome"],
                 "prjdesc": p["prjdesc"],
                 "datainizio": p["datainizio"].isoformat(),
                 "datafine": p["datafine"].isoformat(),
-                "valori": {k.isoformat(): v for k, v in p["valori"].items()},
+                "valori": valori_ser,
                 "obiettivo": p["obiettivo"]
             }
         with open(RECORDNAME, "w", encoding="utf-8") as f:
@@ -107,12 +115,19 @@ def Carica():
 
             progetti = {}
             for pid, p in dati.items():
+                valori_caricati = {}
+                for k, v in p["valori"].items():
+                    data_k = dt.datetime.fromisoformat(k)
+                    if isinstance(v, list):
+                        valori_caricati[data_k] = v
+                    else:
+                        valori_caricati[data_k] = [v, ""]
                 progetti[pid] = {
                     "prjnome": p["prjnome"],
                     "prjdesc": p["prjdesc"],
                     "datainizio": dt.datetime.fromisoformat(p["datainizio"]),
                     "datafine": dt.datetime.fromisoformat(p["datafine"]),
-                    "valori": {dt.datetime.fromisoformat(k): v for k, v in p["valori"].items()},
+                    "valori": valori_caricati,
                     "obiettivo": p["obiettivo"]
                 }
             return progetti
@@ -194,7 +209,7 @@ def Inizializzazione():
         print("La data di fine deve essere successiva a quella di inizio. Riprova.")
         
     valore = dgt(prompt="Inserisci il valore di partenza:> ", kind="f", fmin=0.0, fmax=1000.0)
-    valori = {datainizio: valore}
+    valori = {datainizio: [valore, ""]}
     
     while True:
         obiettivo = dgt(prompt="Inserisci l'obiettivo da raggiungere:> ", kind="f", fmin=0.0, fmax=1000.0)
@@ -275,8 +290,8 @@ def VPObiettivo(stato, show=False):
         if show: print("Nessun valore registrato.")
         return 0.0
         
-    valoreiniziale = valori[min(valori.keys())]
-    valoreattuale = valori[max(valori.keys())]
+    valoreiniziale = valori[min(valori.keys())][0]
+    valoreattuale = valori[max(valori.keys())][0]
     
     diff_obiettivo = obiettivo - valoreiniziale
     if diff_obiettivo == 0:
@@ -307,7 +322,7 @@ def CalcolaProiezione(valori, obiettivo, n_punti=None):
         if len(date_ordinate) < 2:
             return None, None
     x = [d.timestamp() for d in date_ordinate]
-    y = [valori[d] for d in date_ordinate]
+    y = [valori[d][0] for d in date_ordinate]
     try:
         slope, _ = np.polyfit(x, y, 1)
     except Exception:
@@ -337,12 +352,15 @@ def VRegistro(stato):
     contatore = 1
     differenza = 0.0
     for k in sorted(valori.keys()):
-        v = valori[k]
+        entry = valori[k]
+        v = entry[0]
+        commento = entry[1] if len(entry) > 1 else ""
+        suff_commento = f" | {commento}" if commento else ""
         k1 = Humanize(k)
         if contatore == 1:
-            print(f"({contatore}) - {v:+.2f}, (inizio) - di {k1}.")
+            print(f"({contatore}) - {v:+.2f}, (inizio) - di {k1}.{suff_commento}")
         else:
-            print(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - di {k1}.")
+            print(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - di {k1}.{suff_commento}")
         contatore += 1
         differenza = v
     print(f"Totale {len(valori)} records registrati.")
@@ -355,7 +373,7 @@ def Cancelladato(stato):
         return stato
         
     valore = dgt(prompt="Inserisci il valore che vuoi cancellare:> ", kind="f", fmin=0.0, fmax=1000.0)
-    ricerca = [k for k, v in valori.items() if v == valore]
+    ricerca = [k for k, v in valori.items() if v[0] == valore]
     
     if not ricerca:
         RiproduciEffetto("rifiuto")
@@ -397,12 +415,35 @@ def Cancelladato(stato):
     print(f"Dato eliminato. Ora il registro contiene {len(valori)} records.")
     return stato
 
+def _parse_nuovo_input(raw):
+    """Analizza l'input del comando 'nuovo': 'valore [commento]'.
+    Accetta sia virgola che punto come separatore decimale.
+    Restituisce (valore_float, commento_str) oppure solleva ValueError."""
+    raw = raw.strip()
+    if not raw:
+        raise ValueError("Input vuoto.")
+    parti = raw.split(" ", 1)
+    val_str = parti[0].replace(",", ".")
+    valore = float(val_str)
+    commento = ""
+    if len(parti) > 1:
+        commento = parti[1].strip()[:70]
+    return valore, commento
+
 def Nuovodato(stato):
     valori = stato["valori"]
-    valore = dgt(prompt="Inserisci il valore da registrare:> ", kind="f")
+    while True:
+        raw = input("Nuovo: valore [commento]> ").strip()
+        if not raw:
+            continue
+        try:
+            valore, commento = _parse_nuovo_input(raw)
+            break
+        except ValueError:
+            print("Formato non valido. Inserisci un numero, opzionalmente seguito da un commento.")
     RiproduciEffetto("convalida0")
     
-    listavalori = list(valori.values())
+    listavalori = [v[0] for v in valori.values()]
     if listavalori:
         massimo = max(listavalori)
         minimo = min(listavalori)
@@ -418,10 +459,10 @@ def Nuovodato(stato):
         print(r)
         
     adesso = dt.datetime.now().replace(microsecond=0)
-    valori[adesso] = valore
+    valori[adesso] = [valore, commento]
     print(f"Fatto. Ora il registro contiene {len(valori)} records.")
     
-    valoreiniziale = valori[min(valori.keys())]
+    valoreiniziale = valori[min(valori.keys())][0]
     obiettivo = stato["obiettivo"]
     durata_totale = (stato["datafine"] - stato["datainizio"]).total_seconds()
     tempo_trascorso = (adesso - stato["datainizio"]).total_seconds()
@@ -504,7 +545,7 @@ def SelezionaProgetto(progetti):
         if scelta is None:
             if progetti:
                 print("Selezione annullata.")
-                return list(progetti.keys())[0]
+                return next(iter(progetti.keys()))
             else:
                 continue
                 
@@ -542,8 +583,8 @@ def VConfronto(stato):
         print("Dati insufficienti per un confronto.")
         return
         
-    valoreiniziale = valori[min(valori.keys())]
-    valoreattuale = valori[max(valori.keys())]
+    valoreiniziale = valori[min(valori.keys())][0]
+    valoreattuale = valori[max(valori.keys())][0]
     
     diff_obiettivo = obiettivo - valoreiniziale
     op = (valoreattuale - valoreiniziale) * 100 / diff_obiettivo if diff_obiettivo != 0 else 100.0
@@ -579,13 +620,13 @@ def Infostatistiche(stato):
         
     RiproduciEffetto("mostra")
     print("\nInformazioni statistiche sui valori registrati.")
-    l = list(valori.values())
+    l = [v[0] for v in valori.values()]
     print("Numero di records:", len(l))
     
     piupiccolo = min(l)
     piugrande = max(l)
-    listapiccoli = [k for k, v in valori.items() if v == piupiccolo]
-    listagrandi = [k for k, v in valori.items() if v == piugrande]
+    listapiccoli = [k for k, v in valori.items() if v[0] == piupiccolo]
+    listagrandi = [k for k, v in valori.items() if v[0] == piugrande]
     
     print(f"Il valore massimo è {piugrande:+.2f} e compare {len(listagrandi)} volte.")
     for j in listagrandi:
@@ -600,12 +641,12 @@ def Infostatistiche(stato):
     print(f"Moda: {statistics.mode(l):+.2f}.")
     print(f"Deviazione standard: {statistics.stdev(l):+.2f}.")
     print(f"Varianza: {statistics.variance(l):+.2f}.")
-    dati_ordinati = sorted(valori.items(), key=lambda x: x[1])
+    dati_ordinati = sorted(valori.items(), key=lambda x: x[1][0])
     indices = np.array_split(range(len(dati_ordinati)), 4)
     print("\nSuddivisione in quartili per valore:")
     for idx, idx_group in enumerate(indices, 1):
         chunk = [dati_ordinati[i] for i in idx_group]
-        chunk_vals = [item[1] for item in chunk]
+        chunk_vals = [item[1][0] for item in chunk]
         chunk_dates = [item[0] for item in chunk]
         date_min = min(chunk_dates)
         date_max = max(chunk_dates)
@@ -620,7 +661,7 @@ def Infostatistiche(stato):
     print("\nSuddivisione in quartili per tempo:")
     for idx, idx_group in enumerate(indices_c, 1):
         chunk = [dati_cronologici[i] for i in idx_group]
-        chunk_vals = [item[1] for item in chunk]
+        chunk_vals = [item[1][0] for item in chunk]
         chunk_dates = [item[0] for item in chunk]
         date_min = min(chunk_dates)
         date_max = max(chunk_dates)
@@ -631,8 +672,8 @@ def Infostatistiche(stato):
         print(f"\tmin: {c_min:+.2f}, med: {c_mean:+.2f}, max: {c_max:+.2f}")
 
     date_ordinate = sorted(valori.keys())
-    primo_valore = valori[date_ordinate[0]]
-    ultimo_valore = valori[date_ordinate[-1]]
+    primo_valore = valori[date_ordinate[0]][0]
+    ultimo_valore = valori[date_ordinate[-1]][0]
     variazione_totale = ultimo_valore - primo_valore
     print(f"\nVariazione totale dal primo all'ultimo record: {variazione_totale:+.2f}")
 
@@ -644,8 +685,8 @@ def Infostatistiche(stato):
     for i in range(1, len(date_ordinate)):
         data_prec = date_ordinate[i-1]
         data_corr = date_ordinate[i]
-        val_prec = valori[data_prec]
-        val_corr = valori[data_corr]
+        val_prec = valori[data_prec][0]
+        val_corr = valori[data_corr][0]
         delta_val = val_corr - val_prec
         delta_tempo = data_corr - data_prec
         
@@ -716,8 +757,8 @@ def ConcludiProgetto(stato):
         valoreiniziale = 0
         valoreattuale = 0
     else:
-        valoreiniziale = valori[min(valori.keys())]
-        valoreattuale = valori[max(valori.keys())]
+        valoreiniziale = valori[min(valori.keys())][0]
+        valoreattuale = valori[max(valori.keys())][0]
         
     diff_obiettivo = obiettivo - valoreiniziale
     percentuale_obiettivo = (valoreattuale - valoreiniziale) * 100 / diff_obiettivo if diff_obiettivo != 0 else 100.0
@@ -747,12 +788,15 @@ def ConcludiProgetto(stato):
             contatore = 1
             differenza = 0.0
             for k in sorted(valori.keys()):
-                v = valori[k]
+                entry = valori[k]
+                v = entry[0]
+                commento = entry[1] if len(entry) > 1 else ""
+                suff_commento = f" | {commento}" if commento else ""
                 k1 = Humanize(k)
                 if contatore == 1:
-                    f.write(f"({contatore}) - {v:+.2f}, (inizio) - di {k1}.\n")
+                    f.write(f"({contatore}) - {v:+.2f}, (inizio) - di {k1}.{suff_commento}\n")
                 else:
-                    f.write(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - di {k1}.\n")
+                    f.write(f"({contatore}) - {v:+.2f}, ({v-differenza:+.2f}) - di {k1}.{suff_commento}\n")
                 contatore += 1
                 differenza = v
                 
@@ -796,7 +840,7 @@ def main():
     else:
         RiproduciEffetto("controllo_ok")
         if len(progetti) == 1:
-            id_corrente = list(progetti.keys())[0]
+            id_corrente = next(iter(progetti.keys()))
             print(f"Unico obiettivo trovato e caricato: {progetti[id_corrente]['prjnome']}")
         else:
             id_corrente = SelezionaProgetto(progetti)
@@ -823,7 +867,7 @@ def main():
                 else:
                     return
             elif len(progetti) == 1:
-                id_corrente = list(progetti.keys())[0]
+                id_corrente = next(iter(progetti.keys()))
                 stato = progetti[id_corrente]
                 print(f"\nObiettivo '{prj_concluso}' concluso. Rimane un solo obiettivo attivo: '{stato['prjnome']}', che viene caricato automaticamente.")
             else:
@@ -862,7 +906,7 @@ def main():
                     else:
                         break
                 elif len(progetti) == 1:
-                    id_corrente = list(progetti.keys())[0]
+                    id_corrente = next(iter(progetti.keys()))
                     stato = progetti[id_corrente]
                     print(f"\nObiettivo '{prj_concluso}' concluso. Rimane un solo obiettivo attivo: '{stato['prjnome']}', che viene caricato automaticamente.")
                 else:
@@ -875,7 +919,7 @@ def main():
             VRegistro(stato)
         elif attesa == "suono_p":
             if len(stato["valori"]) > 0:
-                dati = [stato["valori"][k] for k in sorted(stato["valori"].keys())]
+                dati = [stato["valori"][k][0] for k in sorted(stato["valori"].keys())]
                 durata = len(dati) * 0.25
                 print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
                 sonify(dati, duration=durata, ptm=True, vol=0.3)
@@ -884,7 +928,7 @@ def main():
                 print("\nNessun valore registrato per la riproduzione.")
         elif attesa == "suono_np":
             if len(stato["valori"]) > 0:
-                dati = [stato["valori"][k] for k in sorted(stato["valori"].keys())]
+                dati = [stato["valori"][k][0] for k in sorted(stato["valori"].keys())]
                 durata = len(dati) * 0.25
                 print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
                 sonify(dati, duration=durata, ptm=False, vol=0.3)
@@ -893,7 +937,7 @@ def main():
                 print("\nNessun valore registrato per la riproduzione.")
         elif attesa == "suono_d":
             if len(stato["valori"]) > 0:
-                dati = [stato["valori"][k] for k in sorted(stato["valori"].keys())]
+                dati = [stato["valori"][k][0] for k in sorted(stato["valori"].keys())]
                 durata = dgt(prompt="Durata? ", kind="f", fmin=3.0, fmax=60.0, default=len(dati) * 0.25)
                 print(f"\nRiproduzione dell'andamento di {len(dati)} valori registrati (durata: {durata:.1f}s)...")
                 sonify(dati, duration=durata, ptm=True, vol=0.3)
@@ -918,7 +962,7 @@ def main():
             VPTempo(stato, show=True)
         elif attesa == "obiettivo":
             nuovo_ob = dgt(prompt=f"Obiettivo attuale: {stato['obiettivo']}, nuovo? >", kind="f", fmin=0.0, fmax=1000.0)
-            if nuovo_ob != stato['valori'][min(stato['valori'].keys())]:
+            if nuovo_ob != stato['valori'][min(stato['valori'].keys())][0]:
                 stato['obiettivo'] = nuovo_ob
                 RiproduciEffetto("roger_cw_conferma")
                 print("Nuovo obiettivo impostato.")
@@ -961,7 +1005,7 @@ def main():
                     Salva(progetti)
                     print(f"Obiettivo eliminato. Passato a {stato['prjnome']}.")
                 elif len(progetti) == 1:
-                    id_corrente = list(progetti.keys())[0]
+                    id_corrente = next(iter(progetti.keys()))
                     stato = progetti[id_corrente]
                     Salva(progetti)
                     print(f"Obiettivo '{prj_eliminato}' eliminato. Passato all'unico rimasto: {stato['prjnome']}.")
