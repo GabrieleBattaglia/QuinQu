@@ -1,5 +1,7 @@
 # Quanto in Quanto (Quinqu). Data di concepimento 10/02/2024.
 # Programma per seguire e salvare i progressi nel raggiungimento di un obiettivo il cui valore possa essere espresso in numeri
+# 03/09/2026: i suoni passano ad Acusticator, di GBUtils.
+# Autori: Gabriele Battaglia (IZ4APU) & ClaudIA (Claude Opus 5, modalita' auto)
 
 import datetime as dt
 import json
@@ -13,49 +15,27 @@ import numpy as np
 
 from GBUtils import Acusticator, dgt, menu, sonify
 
-VERSIONE = "4.4.0 del 27 luglio 2026"
+VERSIONE = "4.4.1 del 3 settembre 2026"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
 
-SUONO_FALLBACK = {
-    "quinqu_startup": ["c5", 0.08, 0.0, 0.4, "e5", 0.08, 0.0, 0.4, "g5", 0.08, 0.0, 0.4, "c6", 0.25, 0.0, 0.4],
-    "quinqu_shutdown": ["c6", 0.08, 0.0, 0.4, "g5", 0.08, 0.0, 0.4, "e5", 0.08, 0.0, 0.4, "c5", 0.25, 0.0, 0.4],
-    "salita_ideale": ["c4.g4", 0.3, 0.0, 0.4],
-    "discesa_ideale": ["g4.c4", 0.3, 0.0, 0.4],
-    "in_linea_ideale": ["e5", 0.15, 0.0, 0.4, "p", 0.05, 0.0, 0.4, "e5", 0.15, 0.0, 0.4],
-    "convalida0": ["c4", 0.1, 0.0, 0.4, "f6", 0.1, 0.0, 0.4, "d#5", 0.1, 0.0, 0.4, "g#6", 0.4, 0.0, 0.4],
-    "vittoria": ["f#4", 0.16, 0.0, 0.3, "c#5", 0.16, 0.0, 0.3, "e4", 0.16, 0.0, 0.3, "b5", 0.28, 0.0, 0.3],
-    "cancellato": ["b2.g#2", 0.22, 0.0, 0.4, "p", 0.06, 0.0, 0.4, "a2", 0.08, 0.0, 0.4],
-    "written_ok": ["c4", 0.04, 0.0, 0.4, "c4.b4", 0.04, 0.0, 0.4],
-    "rifiuto": ["g3.f3", 0.5, 0.0, 0.4, "p", 0.04, 0.0, 0.4, "g7", 0.02, 0.0, 0.4],
-    "rifiutato": ["g3.d3", 0.18, 0.0, 0.4, "f3.c3", 0.18, 0.0, 0.4, "d#3.a#2", 0.18, 0.0, 0.4],
-    "campanellino": ["c8.c#8", 0.5, 0.0, 0.4],
-    "mostra": ["f2", 0.2, 0.0, 0.4, "g#2", 0.2, 0.0, 0.4, "d2", 0.2, 0.0, 0.4],
-    "lista": ["d4.a6", 0.1, 0.0, 0.4],
-    "controllo_ok": ["d4", 0.05, 0.0, 0.4, "f6", 0.05, 0.0, 0.4]
-}
-
 def RiproduciEffetto(nome_preset, base_vol=0.4, sync=True):
-    try:
-        import GBUtils
-        db_path = os.path.join(os.path.dirname(os.path.abspath(GBUtils.__file__)), "Acu_Collection.json")
-        if os.path.exists(db_path):
-            with open(db_path, "r", encoding="utf-8") as f:
-                db = json.load(f)
-            if nome_preset in db:
-                preset = db[nome_preset]
-                score_flat = []
-                for q in preset['score']:
-                    note, dur, pan, vol_delta = q
-                    vol = max(0.0, min(1.0, base_vol + vol_delta))
-                    score_flat.extend([note, dur, pan, vol])
-                Acusticator(score_flat, kind=preset['kind'], adsr=preset['adsr'], sync=sync)
-                return
-    except Exception:
-        pass
-    if nome_preset in SUONO_FALLBACK:
-        Acusticator(SUONO_FALLBACK[nome_preset], kind=1, sync=sync)
+    """Riproduce un effetto della collezione condivisa, chiamandolo per nome.
+
+    Fino alla 4.4.0 questa funzione apriva da sola Acu_Collection.json,
+    appiattiva le quartine e convertiva i volumi, che nella collezione sono
+    scarti rispetto a una base: le stesse righe stavano identiche in altri
+    quattro progetti. Ora quel mestiere lo fa Acusticator, che sa anche
+    dove trovare la collezione da eseguibile congelato.
+    Accanto c'era SUONO_FALLBACK, quindici score di scorta scritti in casa:
+    erano codice morto, perche' tutti i preset richiesti stanno nella
+    collezione e la funzione leggeva prima quella.
+    base_vol e' il volume su cui si applicano gli scarti scritti nel file.
+    Restituisce True se il suono e' partito.
+    """
+    return Acusticator.play(nome_preset, sync=sync, volume=base_vol)
+
 
 main_menu = {
     "nuovo": "Nuova registrazione del valore",
