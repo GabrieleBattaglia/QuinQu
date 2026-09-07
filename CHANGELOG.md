@@ -5,6 +5,8 @@ Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resocont
 
 ## [4.5.0] - 2026-09-07
 
+Pubblicata su GitHub il 2026-09-07 come release `v4.5.0`, con il solo archivio `quinqu.zip` in allegato. Verificato che l'auto updater la riconosca e ne riceva le note. Issue 1 chiusa.
+
 Fase 1 del refactoring generale, più la funzionalità chiesta dalla issue 1.
 
 ### Aggiunto
