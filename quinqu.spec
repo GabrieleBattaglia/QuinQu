@@ -16,28 +16,31 @@ a = Analysis(
     pathex=[GBUTILS_DIR],
     binaries=[],
     datas=[(COLLEZIONE, '.')],
-    # Servono al controllo aggiornamenti di GBUtils: senza, l'eseguibile parte
-    # ma non riesce a contattare GitHub. Non toglierli.
+    # requests e compagni servono al controllo aggiornamenti di GBUtils:
+    # senza, l'eseguibile parte ma non riesce a contattare GitHub.
+    # scipy.signal lo importa Acusticator dentro le funzioni, quindi
+    # PyInstaller non lo trova da solo: senza, l'eseguibile si chiude al
+    # primo suono con ModuleNotFoundError. Non toglierli.
     hiddenimports=[
         'requests',
         'urllib3',
         'certifi',
         'charset_normalizer',
         'chardet',
+        'scipy.signal',
     ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    # Quinqu usa numpy, sounddevice e la libreria standard. Le interfacce
-    # grafiche e i pacchetti scientifici pesanti arriverebbero seguendo le
-    # catene di import di GBUtils, che qui non si usano.
+    # Quinqu usa numpy, scipy, sounddevice e la libreria standard. Le
+    # interfacce grafiche arriverebbero seguendo le catene di import di
+    # GBUtils, che qui non si usano.
     excludes=[
         'wx',
         'PyQt5',
         'PySide2',
         'PySide6',
         'matplotlib',
-        'scipy',
         'IPython',
         'notebook',
         'nbconvert',
