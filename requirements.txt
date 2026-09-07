@@ -1,0 +1,30 @@
+# Quinqu, pacchetti necessari per eseguirlo dal codice sorgente.
+# Autori: Gabriele Battaglia (IZ4APU) & ClaudIA (Claude Opus 5, modalita' auto).
+#
+# Si installa tutto con:
+#     pip install -r requirements.txt
+#
+# ATTENZIONE: manca una dipendenza che pip non puo' scaricare, perche' non sta
+# su PyPI. E' GBUtils, la libreria condivisa dal parco software di IZ4APU, che
+# va clonata a parte e resa raggiungibile da Python:
+#     git clone https://github.com/GabrieleBattaglia/GBUtils.git
+# poi si mette la sua cartella in PYTHONPATH, oppure si copia GBUtils.py
+# accanto a quinqu.py. Accanto a GBUtils.py deve stare anche
+# Acu_Collection.json, che contiene tutti i suoni dell'applicazione.
+#
+# I limiti minimi qui sotto sono prudenti. Lo sviluppo avviene su Windows con
+# Python 3.14.5 e con le versioni indicate fra parentesi nei commenti.
+
+# Retta di regressione delle proiezioni, quartili delle statistiche e calcolo
+# dei campioni audio dentro GBUtils. (sviluppo: 2.5.2)
+numpy>=1.26
+
+# Il motore audio: Acusticator e sonify di GBUtils riproducono da qui i suoni
+# dell'interfaccia e l'andamento dei valori. (sviluppo: 0.5.6)
+sounddevice>=0.5
+
+# Il controllo degli aggiornamenti all'avvio, usato da GBUtils. (sviluppo: 2.34.2)
+requests>=2.31
+
+# Il validatore, che va passato senza rilievi a ogni intervento sul codice.
+ruff>=0.6

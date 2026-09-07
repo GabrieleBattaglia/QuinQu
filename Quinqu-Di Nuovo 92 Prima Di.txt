@@ -1,0 +1,14 @@
+Nome del progetto: Di Nuovo 92 Prima Di
+Descrizione: Proviamo se riesco a raggiungere 92 prima di partire per Tirrenia
+Data inizio: sabato 1 agosto 2026, ore 08:20
+Data fine: sabato 8 agosto 2026, ore 08:20
+Valore iniziale: +93.75
+Valore obiettivo: +92.00
+Tempo scaduto: raggiunto il -0.00% dell'obiettivo
+
+Registro dei valori:
+(1) - +93.75, (inizio) - di sabato 1 agosto 2026, ore 08:20.
+Sono stati registrati pochi valori per mostrare le statistiche (minimo 4).
+
+Report prodotto il domenica 6 settembre 2026, ore 21:00
+Applicazione: Quanto In Quanto (Quinqu) versione 4.4.1 del 3 settembre 2026

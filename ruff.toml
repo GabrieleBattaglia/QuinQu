@@ -1,0 +1,33 @@
+# Configurazione ruff di Quinqu.
+# Autori: Gabriele Battaglia (IZ4APU) & ClaudIA (Claude Opus 5, modalita' auto).
+line-length = 140
+
+[lint]
+select = ["E", "F", "W", "B", "SIM", "UP", "I", "C4", "RET", "BLE", "S", "RUF", "DTZ"]
+ignore = [
+    # Righe lunghe: quasi tutti i messaggi all'utente e i prompt di dgt
+    # stanno su una riga sola, e spezzarli renderebbe piu' difficile
+    # ritrovarli nel codice.
+    "E501",
+    # Lo stile di Gabriele ammette l'istruzione breve sulla stessa riga.
+    "E701",
+    "E702",
+    "E741",
+    # Date e orari sono di proposito ora locale, senza fuso. Quinqu segue un
+    # obiettivo sul calendario di chi lo usa: la pesata di stasera e' quella
+    # che segna il suo orologio, non quella di Greenwich, e passare a UTC
+    # sposterebbe di un giorno le registrazioni serali, che sono la
+    # maggioranza. Lo stesso vale per le date di inizio e fine progetto, che
+    # l'utente digita guardando il proprio calendario.
+    "DTZ005",
+    "DTZ001",
+    # L'operatore ternario al posto di un if else: qui le due alternative
+    # sono formule lunghe, e comprimerle produce righe da centotrenta
+    # caratteri. Un if esplicito si legge in modo lineare, che e' proprio
+    # cio' che serve a chi ascolta il codice invece di guardarlo.
+    "SIM108",
+    # pickle.load serve soltanto a leggere il vecchio quinqu.db dell'utente
+    # stesso, una volta sola, per convertirlo in json. Non arriva niente da
+    # fuori e il file viene poi rinominato in .bak.
+    "S301",
+]
