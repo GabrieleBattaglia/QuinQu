@@ -1,0 +1,250 @@
+Analisi del codice, fase 1
+Progetto: Quinqu, Quanto In Quanto
+Versione analizzata: 4.4.1 del 3 settembre 2026
+Fase: 1
+Data: 2026-09-07
+Analisi eseguita da: ClaudIA, Claude Opus 5 in modalita' auto
+Autori del progetto: Gabriele Battaglia (IZ4APU) & ClaudIA
+Stato delle correzioni
+Analisi e correzioni sono state eseguite nella stessa sessione del 2026-09-07, su richiesta esplicita di Gabriele di procedere in un intervento unico. I rilievi da 1 a 27, il 29 e il 30 sono stati corretti nella versione 4.5.0 e verificati con cinque tornate di prove automatiche, che sostituiscono audio, attese di tasto e rete e lasciano veri caricamento, salvataggio, calcoli e stampe. Cio' che non si puo' provare senza orecchie e senza tastiera vera sta in collaudo.txt.
+Resta aperto il solo rilievo 28, manuale e donazione, che e' una scelta di contenuto e appartiene a Gabriele.
+Questo rapporto va tenuto per intero fino a quando Gabriele non lo ha letto e la versione 4.5.0 non e' stata pubblicata. Dopo, secondo il punto 4.1.1 del documento di refactoring, i rilievi risolti si cancellano da qui e resta il solo 28; il resoconto di cio' che e' stato fatto sta nel changelog e nel messaggio di commit.
+La riga di Quinqu nella tabella del documento di refactoring va aggiornata soltanto dopo il rilascio della nuova versione su GitHub.
+1. File esaminati
+quinqu.py, 1005 righe, l'intera applicazione: persistenza, calcoli, statistiche, menu e interfaccia testuale.
+README.md, 8 righe, presentazione breve.
+.gitignore, 118 righe, esclusioni standard Python.
+quinqu.json, 1 riga, archivio degli obiettivi, al momento vuoto perche' l'ultimo progetto e' stato concluso il 2026-09-06.
+quinqu.db.bak, 503 byte, il vecchio archivio pickle rinominato dalla migrazione. Contiene il progetto A Novanta Gradi, di cui non esiste nessun altro resoconto: non va cancellato.
+Quinqu-Mi piace cosi'.txt, Quinqu-Riproviamo Col 92.txt, Quinqu-Di Nuovo 92 Prima Di.txt, report di progetti conclusi, prodotti dall'applicazione.
+File di contorno assenti e attesi dallo standard del parco software: CHANGELOG, requirements.txt, file .spec per PyInstaller, configurazione ruff dedicata.
+2. Issue aperte trovate su GitHub
+Issue 1, Tappe, aperta il 2026-09-06. Chiede una nuova funzionalita', non segnala un difetto: l'analisi non la conferma ne' la smentisce, la affianca. Nessuno dei rilievi qui sotto era gia' stato registrato come issue.
+3. Rilievi in ordine di gravita' decrescente
+3.1 Rilievi critici
+Rilievo 1
+Gravita': critico
+Categoria: fragilita'
+File e riga: quinqu.py:87 e 116, con effetto su main a quinqu.py:806 e 819
+Problema: Carica racchiude la lettura e la conversione di tutti i progetti in un unico try con except generico. Basta che un solo record sia incompleto o malformato perche' la funzione restituisca None, cioe' lo stesso valore che significa archivio assente. main interpreta None come nessun dato, crea un progetto nuovo e chiama subito Salva, che riscrive quinqu.json.
+Verifica: riprodotto in laboratorio con un quinqu.json a cui manca la chiave datafine in un solo progetto. Carica stampa l'errore e restituisce None.
+Impatto per l'utente: un archivio danneggiato, anche solo per un byte, viene distrutto in modo definitivo al primo avvio successivo, senza che venga chiesto niente e senza che ne resti copia.
+Correzione proposta: distinguere l'archivio assente da quello illeggibile, validare i record uno per uno scartando soltanto quelli rotti e dicendo quali, e rifiutare qualsiasi salvataggio finche' l'utente non ha visto il guasto.
+Rilievo 2
+Gravita': critico
+Categoria: logica
+File e riga: quinqu.py:762, 797 e 802, con effetto su main a quinqu.py:831 e 869
+Problema: ConcludiProgetto restituisce True in ogni caso, anche quando la scrittura del report finisce nel ramo except. main tratta quel True come conferma che il resoconto esiste, cancella il progetto dall'archivio e salva.
+Verifica: riprodotto in laboratorio con un progetto chiamato Peso: 92/95. Il nome finisce nel nome del file, Windows rifiuta i due punti e la barra, open solleva OSError, la funzione stampa l'errore e restituisce True lo stesso.
+Impatto per l'utente: il progetto viene cancellato per sempre e non ne resta ne' il record nell'archivio ne' il report su disco. E' la perdita di tutto il lavoro di mesi, e si presenta proprio nel momento del traguardo.
+Correzione proposta: restituire True soltanto a report scritto, ripulire il nome del file dai caratteri che Windows non ammette, non sovrascrivere un report omonimo gia' presente e, in caso di guasto, lasciare il progetto nell'archivio dicendo all'utente che cosa e' andato storto.
+Rilievo 3
+Gravita': critico
+Categoria: fragilita'
+File e riga: quinqu.py:296 e 312
+Problema: CalcolaProiezione divide la distanza dall'obiettivo per la pendenza della retta di regressione e passa il risultato a datetime.timedelta. Quando la pendenza e' vicina a zero, cioe' quando i valori sono in stallo, il numero di secondi diventa enorme e timedelta o la somma con la data sollevano OverflowError, che nessuno intercetta.
+Verifica: riprodotto in laboratorio con sei valori che scendono di un miliardesimo al giorno, OverflowError, Python int too large to convert to C int; e con cinque valori identici seguiti da un calo di un decimilionesimo, OverflowError, date value out of range.
+Impatto per l'utente: l'applicazione si chiude con una traccia di stack subito dopo l'inserimento di un valore, che a quel punto non e' ancora stato salvato e va perso. Lo stallo dei valori non e' un caso di laboratorio: e' la situazione normale di chi non fa progressi per qualche giorno.
+Correzione proposta: fissare un orizzonte massimo oltre il quale la proiezione si dichiara non calcolabile, e proteggere comunque la costruzione della data.
+Rilievo 4
+Gravita': critico
+Categoria: fragilita'
+File e riga: quinqu.py:62 e 80
+Problema: Salva apre quinqu.json in scrittura e ci riversa dentro il json. Il file viene troncato prima che il nuovo contenuto esista, non c'e' scrittura su file temporaneo con sostituzione atomica e non c'e' nessuna copia di sicurezza del contenuto precedente.
+Impatto per l'utente: un'interruzione qualsiasi durante il salvataggio, dalla mancanza di corrente al disco pieno, lascia un file troncato, e a quel punto interviene il rilievo 1 e l'archivio e' perduto.
+Correzione proposta: scrivere su file temporaneo nella stessa cartella, sostituire con os.replace e conservare la versione precedente come quinqu.json.bak.
+3.2 Rilievi alti
+Rilievo 5
+Gravita': alto
+Categoria: fragilita'
+File e riga: quinqu.py:857 e seguenti, tutto il ciclo dei comandi
+Problema: nessuno dei comandi che modificano i dati salva. Nuovodato, Cancelladato, Cambiafine e la modifica dell'obiettivo cambiano soltanto la memoria. Il salvataggio avviene solo con il comando salva e con esci.
+Impatto per l'utente: chiudere la finestra del terminale, premere Control C o incontrare un errore qualsiasi butta via tutti i valori inseriti nella sessione.
+Correzione proposta: salvare subito dopo ogni modifica, in silenzio, senza il suono e senza il messaggio che ha senso solo per il comando salva esplicito.
+Rilievo 6
+Gravita': alto
+Categoria: fragilita'
+File e riga: quinqu.py:1005
+Problema: main viene chiamata senza nessuna protezione. Control C produce una traccia di stack, e ogni eccezione non prevista fa lo stesso.
+Impatto per l'utente: chiusura brutale, dati non salvati persi e un messaggio in inglese che non dice niente a chi lo ascolta con lo screen reader.
+Correzione proposta: intercettare KeyboardInterrupt salvando prima di uscire, e intercettare le altre eccezioni dicendo in italiano che cosa e' successo.
+Rilievo 7
+Gravita': alto
+Categoria: fragilita'
+File e riga: quinqu.py:19, 20, 80, 87, 118 e 761
+Problema: RECORDNAME e OLD_RECORDNAME sono nomi nudi, quindi relativi alla directory di lavoro. Lo stesso vale per il nome del report. L'applicazione trova e scrive i propri dati dove si trova la console al momento del lancio, non dove sta il programma.
+Impatto per l'utente: lanciando l'eseguibile da un collegamento sul desktop, o da una console aperta altrove, Quinqu non trova l'archivio, si comporta come se non esistesse nessun obiettivo e ne crea uno nuovo in un'altra cartella. Sommato al rilievo 1, e' un altro modo di perdere tutto.
+Correzione proposta: ricavare la cartella dei dati da sys.executable quando si gira da eseguibile e da __file__ quando si gira da sorgente, come gia' fanno Scriba e CWapu, e costruire i percorsi con os.path.join.
+Rilievo 8
+Gravita': alto
+Categoria: fragilita'
+File e riga: quinqu.py:761
+Problema: il nome del report nasce dal nome del progetto senza nessuna ripulitura, e se un report con quel nome esiste gia' viene sovrascritto senza avviso.
+Impatto per l'utente: due facce dello stesso danno, il report che non si scrive e il report vecchio che sparisce. Nella cartella ci sono gia' tre report, e un nome ripetuto ne cancellerebbe uno.
+Correzione proposta: sostituire i caratteri vietati, e se il nome e' occupato aggiungere un progressivo invece di sovrascrivere.
+Rilievo 9
+Gravita': alto
+Categoria: fragilita'
+File e riga: quinqu.py:84, 114, 146, 149, 306 e 798
+Problema: sei except Exception nudi, uno dei quali seguito soltanto da pass. Nascondono allo stesso modo il disco pieno e l'errore di programmazione.
+Impatto per l'utente: guasti diversi producono lo stesso messaggio generico, e alcuni non producono niente. Chi deve capire cosa e' successo non ha appigli.
+Correzione proposta: intercettare le eccezioni che ci si aspetta davvero, OSError, ValueError, KeyError, TypeError, json.JSONDecodeError, e lasciar passare le altre fino alla rete di sicurezza del rilievo 6.
+3.3 Rilievi medi
+Rilievo 10
+Gravita': medio
+Categoria: logica
+File e riga: quinqu.py:190, 197, 355, 400 e 953
+Problema: il valore ammesso e' limitato all'intervallo da 0 a 1000 in quattro punti, sempre con le costanti scritte a mano, ma Nuovodato non applica nessun limite perche' converte con float diretto. Per giunta dgt non rifiuta i valori fuori limite, li corregge in silenzio riportandoli al minimo o al massimo.
+Impatto per l'utente: chi digita 1500 come obiettivo si ritrova 1000 e potrebbe non accorgersene; chi registra un valore qualsiasi lo vede accettato senza controlli. Le due strade non concordano, e un valore negativo entra da una parte e non dall'altra, mentre tutte le stampe usano il formato con il segno, quindi il programma dichiara di aspettarsi anche i negativi.
+Correzione proposta: una sola coppia di costanti, applicata in tutti i punti, Nuovodato compreso, e limiti abbastanza larghi da non correggere in silenzio quello che l'utente intendeva davvero.
+Rilievo 11
+Gravita': medio
+Categoria: logica
+File e riga: quinqu.py:445 e 450
+Problema: la deviazione dal valore ideale viene calcolata con due denominatori diversi a seconda del ramo. Se il valore ideale non e' zero si divide per il valore ideale, altrimenti si divide per l'ampiezza fra valore iniziale e obiettivo. La stessa etichetta, deviazione percentuale, indica due grandezze incomparabili.
+Impatto per l'utente: su un progetto di peso, con valore ideale intorno a 94, uno scarto di mezzo chilo appare come lo 0,5 per cento, cioe' trascurabile, mentre rispetto ai cinque chili da perdere e' il dieci per cento. La percentuale mostrata sminuisce sistematicamente il ritardo.
+Correzione proposta: dividere sempre per l'ampiezza dell'obiettivo, che e' la grandezza rispetto a cui il ritardo ha un significato.
+Rilievo 12
+Gravita': medio
+Categoria: regole generali
+File e riga: quinqu.py:222
+Problema: StampaTabellino ordina quattro numeri, valore iniziale, valore attuale, valore ideale e obiettivo, e li stampa in fila separati dalle differenze, senza dire quale sia quale. L'informazione sta tutta nella posizione.
+Impatto per l'utente: la riga si legge con lo screen reader come una sequenza di numeri senza nomi. E' esattamente il caso che le regole di accessibilita' vietano, l'informazione veicolata dalla sola posizione.
+Correzione proposta: nominare ogni valore accanto al suo numero.
+Rilievo 13
+Gravita': medio
+Categoria: DRY
+File e riga: quinqu.py:476 e 691 per le proiezioni; 336 e 771 per il registro; 831 e 869 per la conclusione; 555 per il confronto
+Problema: quattro duplicazioni interne. Le quattordici righe che stampano le due proiezioni compaiono identiche in Nuovodato e in Infostatistiche. Il ciclo che numera e stampa il registro compare in VRegistro e dentro ConcludiProgetto. Il blocco che gestisce la conclusione di un progetto, cancellazione, salvataggio e scelta del successivo, compare due volte in main per una quarantina di righe complessive. VConfronto ricalcola a mano le percentuali che VPObiettivo e VPTempo gia' restituiscono.
+Impatto per l'utente: nessuno di immediato, ma ogni correzione futura va applicata in due posti e prima o poi se ne dimentica uno.
+Correzione proposta: una funzione per le proiezioni, una per le righe del registro, una per la conclusione, e VConfronto che chiama le due funzioni esistenti.
+Rilievo 14
+Gravita': medio
+Categoria: DRY
+File e riga: quinqu.py:416
+Problema: Nuovodato legge con input nudo invece che con dgt, e si scrive da sola il ciclo di riprova e il messaggio di errore.
+Impatto per l'utente: il comportamento e' diverso da tutti gli altri prompt dell'applicazione, in particolare l'invio a vuoto non fa niente invece di riportare al menu.
+Correzione proposta: usare dgt per la lettura della riga, lasciando a _parse_nuovo_input il solo compito di separare valore e commento.
+Rilievo 15
+Gravita': medio
+Categoria: fragilita'
+File e riga: quinqu.py:303
+Problema: np.polyfit riceve i timestamp assoluti, cioe' numeri intorno a 1,7 miliardi, su un intervallo di pochi milioni. Il sistema e' mal condizionato e numpy puo' emettere RankWarning su stderr.
+Impatto per l'utente: un avviso in inglese che compare in mezzo ai risultati e viene letto dallo screen reader senza che significhi niente per chi lo ascolta.
+Correzione proposta: sottrarre il primo istante prima della regressione, cosa che non cambia la pendenza e rende il calcolo ben condizionato.
+Rilievo 16
+Gravita': medio
+Categoria: logica
+File e riga: quinqu.py:439 e 68
+Problema: la chiave del registro e' l'istante al secondo. Due valori registrati nello stesso secondo si sovrascrivono in memoria, e comunque al salvataggio due chiavi identiche collassano in una.
+Impatto per l'utente: raro ma silenzioso: un valore inserito sparisce senza che nessuno lo dica.
+Correzione proposta: se l'istante e' gia' occupato, spostarsi in avanti di un secondo finche' non e' libero.
+Rilievo 17
+Gravita': medio
+Categoria: regole generali
+File e riga: venticinque print in tutto il file, fra cui quinqu.py:233, 264, 331, 379 e 578; tabulazioni a quinqu.py:606, 610, 674 e 678
+Problema: venticinque messaggi iniziano con un a capo, cioe' con una riga vuota di separazione. Sei righe delle statistiche sono rientrate con la tabulazione, che e' un allineamento a colonne. Diverse righe informative superano abbondantemente i quaranta caratteri pur riportando dati che cambiano a ogni inserimento.
+Impatto per l'utente: righe vuote che lo screen reader annuncia senza motivo, rientri che sul display braille occupano celle senza dire niente, e righe lunghe da scorrere per intero per arrivare al dato.
+Correzione proposta: togliere le righe vuote, sostituire i rientri con un'etichetta parlante e spezzare le righe informative in blocchi di circa quaranta caratteri.
+Rilievo 18
+Gravita': medio
+Categoria: regole generali
+File e riga: quinqu.py:17
+Problema: VERSIONE tiene insieme numero e data in una sola stringa, 4.4.1 del 3 settembre 2026. Il resto del parco software separa APP_VERSION e RELEASE_DATE, e il controllo aggiornamenti ha bisogno del solo numero.
+Impatto per l'utente: nessuno oggi, ma la stringa non e' utilizzabile per il confronto delle versioni e va disfatta a mano.
+Correzione proposta: APP_NAME, APP_VERSION e RELEASE_DATE separati, come in Scriba.
+Rilievo 19
+Gravita': medio
+Categoria: DRY
+File e riga: quinqu.py:15, l'elenco delle importazioni
+Problema: Quinqu non controlla se esiste una versione nuova, mentre GBUtils offre gestisci_aggiornamento, che conduce da sola tutta la conversazione, e tutti gli altri progetti gia' revisionati la usano. Le release pubblicate su GitHub si fermano alla 4.3.1, mentre il sorgente e' alla 4.4.1.
+Impatto per l'utente: chi usa l'eseguibile resta su una versione vecchia senza saperlo.
+Correzione proposta: chiamare gestisci_aggiornamento all'avvio con l'indirizzo delle release del repository.
+Rilievo 29
+Gravita': medio
+Categoria: logica
+File e riga: quinqu.py:168 e 172
+Problema: DigitaData propone come giorno predefinito il giorno di oggi, e lo passa a dgt insieme al massimo del mese scelto. Ma dgt, quando si preme invio, restituisce il valore predefinito senza applicare i limiti: e' scritto nella sua docstring ed e' il suo comportamento voluto. Se oggi e' il 31 e si sceglie febbraio, dgt restituisce 31 e datetime rifiuta la data.
+Verifica: riprodotto in laboratorio. dgt con imax 29 e default 31 restituisce 31, e datetime solleva ValueError, day 31 must be in range 1..28.
+Impatto per l'utente: l'applicazione si chiude con una traccia di stack durante la creazione di un obiettivo o la modifica della data di fine, in tutti i mesi corti e solo negli ultimi giorni del mese. Chi ci incappa non capisce cosa abbia sbagliato, perche' ha soltanto premuto invio.
+Correzione proposta: qui, limitare il valore predefinito al massimo del mese prima di passarlo a dgt. La trappola pero' e' di dgt, che offre limiti e poi li scavalca per il predefinito: va segnalata come issue sul repository GBUtils, perche' ogni chiamante deve ricordarsene da solo.
+Rilievo 30
+Gravita': medio
+Categoria: logica
+File e riga: quinqu.py:296
+Problema: la proiezione non guarda quanto tempo coprano i dati su cui e' calcolata. Con due soli valori registrati a un minuto di distanza la retta ha una pendenza enorme e il traguardo risulta raggiunto entro pochi minuti.
+Verifica: osservato durante il giro di prova completo. Appena creato un obiettivo e registrato il secondo valore, l'applicazione ha annunciato velocita' meno 3780 al giorno e traguardo fra due minuti.
+Impatto per l'utente: proprio al primo inserimento, quando ancora non si conosce l'applicazione, il programma dichiara con sicurezza una previsione assurda.
+Correzione proposta: calcolare la proiezione solo quando i dati coprono almeno un giorno, e altrimenti dire che sono troppo ravvicinati.
+3.4 Rilievi bassi
+Rilievo 20
+Gravita': basso
+Categoria: ottimizzazione
+File e riga: cartella __pycache__
+Problema: tre file .pyc sono tracciati da git nonostante .gitignore li escluda, fra cui GBUtils.cpython-311.pyc, residuo di quando GBUtils.py veniva copiato nella cartella del progetto.
+Impatto per l'utente: nessuno diretto, ma il repository porta con se' file compilati per interpreti che non sono piu' quello in uso.
+Correzione proposta: toglierli dall'indice con git rm --cached, i file su disco restano e .gitignore fa il resto.
+Rilievo 21
+Gravita': basso
+Categoria: regole generali
+File e riga: quinqu.py in generale
+Problema: ruff, con la configurazione condivisa di E:\git\mine, riporta sedici rilievi, sette DTZ005 per datetime.now senza fuso, sei BLE001 per gli except nudi del rilievo 9, un DTZ001, un SIM102 e un S110. Manca inoltre nel progetto un ruff.toml dedicato come quelli di CWapu, Scriba, Dadillo e Orologic, che documentano quali regole si ignorano e perche'.
+Impatto per l'utente: nessuno diretto, e' manutenibilita'.
+Correzione proposta: scrivere ruff.toml sul modello degli altri progetti, spiegando che le date sono di proposito ora locale, e portare a zero il resto.
+Rilievo 22
+Gravita': basso
+Categoria: ottimizzazione
+File e riga: quinqu.py:1005, 780, 601
+Problema: il file non termina con un a capo; StringIO viene importato dentro la funzione invece che in testa; la lista dei valori si chiama l, nome che ruff segnala come ambiguo e che allo screen reader suona come una lettera sola.
+Impatto per l'utente: nessuno, e' leggibilita' del codice.
+Correzione proposta: sistemare i tre punti.
+Rilievo 23
+Gravita': basso
+Categoria: ottimizzazione
+File e riga: quinqu.py:158 e 165
+Problema: DigitaData ricalcola a mano quanti giorni ha il mese, bisestili compresi, mentre calendar.monthrange lo dice.
+Impatto per l'utente: nessuno, il calcolo e' corretto, ma sono dodici righe che non serve mantenere.
+Correzione proposta: usare calendar.monthrange.
+Rilievo 24
+Gravita': basso
+Categoria: logica
+File e riga: quinqu.py:180 e 439
+Problema: nulla impedisce di indicare una data di inizio nel futuro. In quel caso il primo valore registrato porta un istante anteriore alla data di inizio e diventa lui il valore iniziale, cambiando tutti i calcoli, e per giunta non si puo' piu' cancellare perche' Cancelladato protegge il record piu' vecchio.
+Impatto per l'utente: raro, ma quando capita i conti cambiano senza che si capisca perche'.
+Correzione proposta: avvisare quando la data di inizio e' nel futuro, chiedendo conferma.
+Rilievo 25
+Gravita': basso
+Categoria: logica
+File e riga: quinqu.py:519 e 971
+Problema: in SelezionaProgetto e nel comando apri, la variabile nuovo_id viene assegnata dentro un ciclo for e usata dopo, senza ramo else. Oggi non puo' restare non assegnata perche' entrambi i punti sono protetti dal controllo sui dieci progetti, ma la protezione sta lontana dal ciclo.
+Impatto per l'utente: nessuno oggi.
+Correzione proposta: una sola funzione che cerca l'identificativo libero e dice chiaramente cosa fa quando non ce n'e'.
+Rilievo 26
+Gravita': basso
+Categoria: regole generali
+File e riga: quinqu.py:23
+Problema: la docstring di RiproduciEffetto racconta la storia del refactoring della 4.4.0, cioe' cosa c'era prima e perche' e' stato tolto. Quel racconto appartiene al messaggio di commit e al changelog.
+Impatto per l'utente: nessuno, e' rumore per chi legge il codice.
+Correzione proposta: lasciare nella docstring soltanto cosa fa la funzione e perche' esiste ancora, cioe' il volume base e la riproduzione sincrona.
+Rilievo 27
+Gravita': basso
+Categoria: regole generali
+File e riga: cartella del progetto
+Problema: mancano CHANGELOG, requirements.txt e il file .spec per PyInstaller, presenti negli altri progetti del parco.
+Impatto per l'utente: la compilazione va rifatta a mano ogni volta e non c'e' un posto dove leggere cosa e' cambiato fra due versioni.
+Correzione proposta: aggiungerli, prendendo a modello Dadillo.
+Rilievo 28
+Gravita': basso
+Categoria: regole generali
+File e riga: quinqu.py, elenco dei comandi
+Problema: Quinqu non ha un manuale e non offre la voce di donazione, mentre GBUtils mette a disposizione manuale e Donazione e Scriba le usa entrambe.
+Impatto per l'utente: chi non ricorda cosa fa un comando non ha dove leggerlo, se non nel menu.
+Correzione proposta: decidere se scrivere Manuale_Quinqu.txt e agganciarlo con manuale, e se aggiungere la voce di donazione. Sono due scelte di contenuto e appartengono a Gabriele, non all'analisi: questo rilievo resta aperto in attesa della sua risposta.
+4. Riepilogo
+Rilievi critici: 4, numeri 1, 2, 3 e 4, tutti e tre i primi verificati sperimentalmente e tutti relativi alla perdita definitiva dei dati.
+Rilievi alti: 5, numeri da 5 a 9.
+Rilievi medi: 11, numeri da 10 a 19 e il 29.
+Rilievi bassi: 9, numeri da 20 a 28.
+Totale: 29 rilievi.
+Parti dichiarate solide: la migrazione dal vecchio formato pickle al json e' scritta bene e prevede anche il caso del pickle a piu' oggetti separati; il calcolo delle percentuali di tempo e di obiettivo e' corretto e regge anche gli obiettivi in discesa, cioe' quelli in cui il valore da raggiungere e' piu' basso di quello di partenza; le statistiche usano il modulo statistics invece di riscriverne le formule; l'audio e' gia' passato ad Acusticator nella 4.4.1 e non ci sono suoni riscritti in casa; il registro con il commento facoltativo accanto al valore ricarica correttamente anche i record vecchi salvati senza commento.
+Ordine di lavorazione proposto: prima i quattro rilievi critici, che sono tutti modi diversi di perdere l'archivio; poi i cinque alti, che allargano la stessa rete di sicurezza; poi i medi, partendo da quelli di logica, 10, 11 e 16, e chiudendo con accessibilita' e DRY; i bassi in coda, insieme alla configurazione di ruff. La issue 1 va implementata dopo, su un codice gia' messo in sicurezza.
