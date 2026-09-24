@@ -3,6 +3,12 @@
 Tutti i cambiamenti e le novità introdotte nelle versioni di Quinqu.
 Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resoconto sta nella cronologia dei commit e nelle release pubblicate su GitHub.
 
+## [4.5.5] - 2026-09-24
+
+### Corretto
+
+- Creando un obiettivo senza scegliere le tappe, Quinqu diceva che si potevano rivedere dal comando `tappe`, che invece le mostra soltanto. Il comando giusto è `dividi`, e ora il messaggio lo nomina.
+
 ## [4.5.4] - 2026-09-24
 
 ### Corretto

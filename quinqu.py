@@ -22,7 +22,7 @@ import numpy as np
 from GBUtils import Acusticator, dgt, enter_escape, gestisci_aggiornamento, key, menu, sonify
 
 APP_NAME = "Quinqu"
-APP_VERSION = "4.5.4"
+APP_VERSION = "4.5.5"
 RELEASE_DATE = "2026-09-24"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
@@ -476,7 +476,7 @@ def Inizializzazione():
     stato["tappe"] = ConfiguraTappe(stato)
     if stato["tappe"] is None:
         stato["tappe"] = TAPPE_PREDEFINITE
-        dillo(f"Nessuna scelta: uso {TAPPE_PREDEFINITE} tappe. Le puoi rivedere dal comando tappe.")
+        dillo(f"Nessuna scelta: uso {TAPPE_PREDEFINITE} tappe. Le puoi rivedere dal comando dividi.")
     return stato
 
 
