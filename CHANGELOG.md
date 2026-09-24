@@ -5,6 +5,8 @@ Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resocont
 
 ## [4.7.2] - 2026-09-24
 
+Pubblicata su GitHub il 2026-09-24 come release `v4.7.2`, con il solo archivio `quinqu.zip` in allegato, e con lei tutti i blocchi dalla 4.5.1 in poi. Verificato che l'auto updater la riconosca e ne riceva le note. Issue 2, 3, 4 e 5 chiuse dai commit che le risolvono.
+
 ### Modificato
 
 - **Le righe tornano intere.** Dalla 4.5.0 ogni frase informativa veniva spezzata in blocchi di circa quaranta caratteri, per la lettura sul display braille. Era un malinteso: i blocchi da quaranta servono soltanto alle righe che si aggiornano da sole o che aspettano un tasto senza bloccare, e anche lì conta dividere le informazioni in blocchi, non tagliare la riga. Tutte le altre righe corte costringevano il display a uno spostamento ogni poche parole e sprecavano spazio. Ora ogni informazione sta in una riga intera e discorsiva: il tabellino di marcia è una riga sola invece di sette, il racconto della situazione sopra la barra quattro invece di quindici, le statistiche raccolgono in una riga media, mediane e moda, ogni quartile ha la sua riga con date e valori, e l'elenco delle tappe proposte, al momento di sceglierle, è una riga sola che la console manda a capo da sé. Le parole sono rimaste quasi tutte le stesse.
