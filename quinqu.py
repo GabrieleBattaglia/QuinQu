@@ -22,7 +22,7 @@ import numpy as np
 from GBUtils import Acusticator, dgt, enter_escape, gestisci_aggiornamento, key, menu, sonify
 
 APP_NAME = "Quinqu"
-APP_VERSION = "4.5.2"
+APP_VERSION = "4.5.3"
 RELEASE_DATE = "2026-09-24"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
@@ -1163,8 +1163,10 @@ def MostraTappe(stato):
     f_media = (media - vi) / span
     # Il terzo campo e' l'ordine con cui le etichette si scrivono quando due
     # o piu' marcatori finiscono nella stessa cella. Il numero della tappa
-    # viene sempre per primo, poi le lettere.
-    marcatori = [(0, "I", 1), (lunghezza - 1, "F", 1)]
+    # viene sempre per primo, poi i segni di partenza e traguardo, poi le
+    # lettere. Partenza e traguardo sono < e > e non piu' I e F: sono segni
+    # che dicono da soli da che parte si entra e da che parte si esce.
+    marcatori = [(0, "<", 1), (lunghezza - 1, ">", 1)]
     marcatori.append((_cella(f_attuale, lunghezza), "O", 2))
     marcatori.append((_cella(f_tempo, lunghezza), "T", 3))
     valori_tappe = []
@@ -1201,7 +1203,7 @@ def MostraTappe(stato):
     # detti il racconto qui sopra, e ripeterli era un doppione. Sta prima
     # della barra, e in righe intere: sono spiegazioni da leggere, non
     # simboli da toccare, quindi non vanno spezzate ogni quaranta caratteri.
-    voci = [("I", 0.0), ("F", 1.0), ("O", f_attuale), ("T", f_tempo), ("D", f_media), ("X", f_max), ("M", f_min)]
+    voci = [("<", 0.0), (">", 1.0), ("O", f_attuale), ("T", f_tempo), ("D", f_media), ("X", f_max), ("M", f_min)]
     pezzi = []
     for lettera, frazione in voci:
         nota = ""
@@ -1211,7 +1213,7 @@ def MostraTappe(stato):
             nota = " oltre il traguardo"
         pezzi.append(f"{lettera} cella {_cella(frazione, lunghezza) + 1}{nota}")
     print("Nella barra: " + ", ".join(pezzi) + ".")
-    print("Dove due o più marcatori cadono nella stessa cella, la barra li scrive uniti, prima il numero della tappa e poi le lettere.")
+    print("Dove due o più marcatori cadono nella stessa cella, la barra li scrive uniti, prima il numero della tappa e poi gli altri segni.")
     print(f"Barra: {lunghezza} celle su {len(righe_barra)} righe da {LARGHEZZA_RIGA}.")
     StampaBarraBraille(righe_barra)
     return cambiato

@@ -3,6 +3,12 @@
 Tutti i cambiamenti e le novità introdotte nelle versioni di Quinqu.
 Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resoconto sta nella cronologia dei commit e nelle release pubblicate su GitHub.
 
+## [4.5.3] - 2026-09-24
+
+### Modificato
+
+- **Sulla barra delle tappe la partenza è `<` e il traguardo è `>`** (issue 5), al posto di `I` e `F`. Sono segni che dicono da soli da che parte si entra e da che parte si esce. Quando un marcatore cade sulla stessa cella si scrivono uniti come prima: `<X` dove il massimo coincide con la partenza, `10>` dove l'ultima tappa è il traguardo.
+
 ## [4.5.2] - 2026-09-24
 
 ### Modificato
