@@ -3,6 +3,13 @@
 Tutti i cambiamenti e le novità introdotte nelle versioni di Quinqu.
 Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resoconto sta nella cronologia dei commit e nelle release pubblicate su GitHub.
 
+## [4.5.1] - 2026-09-24
+
+### Corretto
+
+- **Ascoltare l'andamento non chiude più l'applicazione** (issue 4). Dalla sua versione 8.0.0, la sonificazione di GBUtils rifiuta con un errore meno di cinque valori e più di cinque minuti di suono, e Quinqu non se ne accorgeva: con uno, due, tre o quattro valori registrati, oppure con più di 1200, l'applicazione si chiudeva. Ora con meno di cinque valori lo dice e non suona, e la durata automatica di un quarto di secondo per valore si ferma a trecento secondi.
+- La durata scelta a mano va da tre a trecento secondi, invece che da tre a sessanta, e il prompt dice i limiti e la durata proposta con l'invio.
+
 ## [4.5.0] - 2026-09-07
 
 Pubblicata su GitHub il 2026-09-07 come release `v4.5.0`, con il solo archivio `quinqu.zip` in allegato. Verificato che l'auto updater la riconosca e ne riceva le note. Issue 1 chiusa.

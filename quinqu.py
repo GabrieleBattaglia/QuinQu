@@ -22,8 +22,8 @@ import numpy as np
 from GBUtils import Acusticator, dgt, enter_escape, gestisci_aggiornamento, key, menu, sonify
 
 APP_NAME = "Quinqu"
-APP_VERSION = "4.5.0"
-RELEASE_DATE = "2026-09-07"
+APP_VERSION = "4.5.1"
+RELEASE_DATE = "2026-09-24"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
@@ -58,6 +58,14 @@ TAPPE_MIN = 2
 # barra occupa gia' undici righe e la legenda cento.
 TAPPE_MAX = 100
 TAPPE_PREDEFINITE = 10
+# Limiti di sonify, dalla V8.0.0 di GBUtils: fuori da questi solleva
+# ValueError, dove prima restava muta o costruiva in memoria un segnale di
+# ore. Un valore al giorno supera i 1200 valori in poco piu' di tre anni, e a
+# un quarto di secondo l'uno la durata passerebbe il tetto.
+SUONO_MIN_VALORI = 5
+SUONO_SECONDI_PER_VALORE = 0.25
+SUONO_DURATA_MIN = 3.0
+SUONO_DURATA_MAX = 300.0
 # I caratteri che Windows non ammette nei nomi di file.
 VIETATI_NEI_NOMI = '<>:"/\\|?*'
 
@@ -1434,17 +1442,34 @@ def GestisciConclusione(progetti, id_corrente):
 def Suona(stato, chiedi_durata=False, portamento=True):
     """Riproduce l'andamento dei valori come una melodia."""
     valori = stato["valori"]
-    if not valori:
+    if len(valori) < SUONO_MIN_VALORI:
         RiproduciEffetto("rifiuto")
-        print("Nessun valore registrato da riprodurre.")
+        dillo(f"Per ascoltare l'andamento servono almeno {SUONO_MIN_VALORI} valori, e ne sono registrati {len(valori)}.")
         return
     dati = [valori[k][0] for k in sorted(valori)]
-    durata = len(dati) * 0.25
+    durata = min(len(dati) * SUONO_SECONDI_PER_VALORE, SUONO_DURATA_MAX)
     if chiedi_durata:
-        durata = dgt(prompt="Durata? ", kind="f", fmin=3.0, fmax=60.0, default=durata)
+        # Il predefinito si riporta qui dentro i limiti per poterlo scrivere
+        # giusto nel prompt: con cinque valori sarebbe un secondo e un quarto.
+        proposta = max(SUONO_DURATA_MIN, durata)
+        durata = dgt(
+            prompt=f"Durata in secondi? da {SUONO_DURATA_MIN:.0f} a {SUONO_DURATA_MAX:.0f}, invio={proposta:.1f}> ",
+            kind="f",
+            fmin=SUONO_DURATA_MIN,
+            fmax=SUONO_DURATA_MAX,
+            default=proposta,
+        )
     print(f"Riproduzione di {len(dati)} valori,")
     print(f"durata {durata:.1f} secondi.")
-    sonify(dati, duration=durata, ptm=portamento, vol=0.3)
+    # I limiti sono gia' rispettati qui sopra; questa rete e' per il giorno
+    # in cui sonify li cambiasse ancora, perche' un suono non riuscito non
+    # deve chiudere l'applicazione.
+    try:
+        sonify(dati, duration=durata, ptm=portamento, vol=0.3)
+    except ValueError as e:
+        RiproduciEffetto("rifiuto")
+        print("Riproduzione non riuscita.")
+        dillo(str(e))
 
 
 def CicloComandi(progetti, id_corrente):
