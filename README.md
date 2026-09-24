@@ -10,7 +10,7 @@ Il manuale completo sta in `Manuale_Quinqu.txt`, e si apre anche dal programma c
 
 ## Accessibilità
 
-Quinqu è pensato per essere usato con uno screen reader. L'output si legge in modo lineare, non ci sono separatori grafici né tabelle allineate a colonne, e le righe informative sono spezzate in blocchi di circa quaranta caratteri per la lettura sul display braille.
+Quinqu è pensato per essere usato con uno screen reader. L'output si legge in modo lineare, non ci sono separatori grafici né tabelle allineate a colonne, e ogni informazione sta in una riga intera e discorsiva, così il display braille non deve spostarsi più del necessario.
 
 ## Installazione da sorgente
 

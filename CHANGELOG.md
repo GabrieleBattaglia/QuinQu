@@ -3,6 +3,12 @@
 Tutti i cambiamenti e le novità introdotte nelle versioni di Quinqu.
 Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resoconto sta nella cronologia dei commit e nelle release pubblicate su GitHub.
 
+## [4.7.2] - 2026-09-24
+
+### Modificato
+
+- **Le righe tornano intere.** Dalla 4.5.0 ogni frase informativa veniva spezzata in blocchi di circa quaranta caratteri, per la lettura sul display braille. Era un malinteso: i blocchi da quaranta servono soltanto alle righe che si aggiornano da sole o che aspettano un tasto senza bloccare, e anche lì conta dividere le informazioni in blocchi, non tagliare la riga. Tutte le altre righe corte costringevano il display a uno spostamento ogni poche parole e sprecavano spazio. Ora ogni informazione sta in una riga intera e discorsiva: il tabellino di marcia è una riga sola invece di sette, il racconto della situazione sopra la barra quattro invece di quindici, le statistiche raccolgono in una riga media, mediane e moda, ogni quartile ha la sua riga con date e valori, e l'elenco delle tappe proposte, al momento di sceglierle, è una riga sola che la console manda a capo da sé. Le parole sono rimaste quasi tutte le stesse.
+
 ## [4.7.1] - 2026-09-24
 
 ### Corretto

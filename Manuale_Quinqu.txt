@@ -1,4 +1,4 @@
-Manuale di Quinqu, Quanto in Quanto, versione 4.7.1
+Manuale di Quinqu, Quanto in Quanto, versione 4.7.2
 Per seguire nel tempo un obiettivo che si possa esprimere con un numero.
 Autori: Gabriele Battaglia (IZ4APU) & ClaudIA.
 Questo manuale si apre dal programma con il comando guida. Si legge a pagine: a fine pagina un tasto qualsiasi prosegue, Escape chiude la lettura.
@@ -7,7 +7,7 @@ Questo manuale si apre dal programma con il comando guida. Si legge a pagine: a 
 Quinqu segue un valore numerico che deve andare da un punto di partenza a un obiettivo entro una certa data. Può essere il peso da perdere, i chilometri da correre in un anno, le pagine di un libro da scrivere, i risparmi da mettere da parte: qualunque cosa si misuri con un numero, che salga o che scenda.
 Un obiettivo ha un nome, una descrizione, una data di inizio, una data di fine, un valore di partenza e un valore da raggiungere. Di volta in volta si registra il valore del momento, e Quinqu dice a che punto si è rispetto all'obiettivo, a che punto si è rispetto al tempo, quale sarebbe il valore giusto per arrivare in orario, quanto manca alla prossima tappa e quando si arriverà al traguardo se si continua di questo passo.
 Si possono seguire fino a dieci obiettivi diversi, ciascuno con la sua storia, e passare dall'uno all'altro.
-Quinqu è pensato per essere usato con uno screen reader e un display braille: l'uscita si legge in modo lineare, senza tabelle né separatori grafici, e le righe informative sono spezzate in blocchi di circa quaranta caratteri.
+Quinqu è pensato per essere usato con uno screen reader e un display braille: l'uscita si legge in modo lineare, senza tabelle né separatori grafici, e ogni informazione sta in una riga intera e discorsiva, per non costringere il display braille a spostarsi più del necessario.
 
 2. Come si danno i comandi
 Al prompt dei comandi si scrive il nome di un comando, oppure solo le prime lettere che bastano a distinguerlo: appena quello che si è scritto porta a un comando solo, Quinqu lo esegue senza aspettare l'invio. Il prompt suggerisce fra parentesi le lettere che si possono digitare a quel punto. Per esempio g porta subito a guida e m a menu, mentre s porta a salva, statistiche e ai tre suoni, e serve una seconda lettera.

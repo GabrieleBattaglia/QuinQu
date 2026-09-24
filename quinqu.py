@@ -22,7 +22,7 @@ import numpy as np
 from GBUtils import Acusticator, Donazione, dgt, enter_escape, gestisci_aggiornamento, key, manuale, menu, sonify
 
 APP_NAME = "Quinqu"
-APP_VERSION = "4.7.1"
+APP_VERSION = "4.7.2"
 RELEASE_DATE = "2026-09-24"
 AUTORE = "Gabriele"
 # Quinqu parla soltanto italiano. Senza lingua esplicita Donazione la
@@ -36,9 +36,6 @@ OLD_RECORDNAME = "quinqu.db"
 # cerca da sola fra le risorse di PyInstaller prima che accanto al sorgente.
 NOME_MANUALE = "Manuale_Quinqu.txt"
 API_RELEASE = "https://api.github.com/repos/GabrieleBattaglia/QuinQu/releases/latest"
-# Larghezza dei blocchi in cui si spezzano le righe informative, per la
-# lettura sul display braille.
-LARGHEZZA_BLOCCO = 40
 # Limiti dei valori registrabili. Stanno qui una volta sola perche' prima
 # erano scritti a mano in quattro punti e in un quinto mancavano del tutto.
 VALORE_MIN = -1000000.0
@@ -137,51 +134,6 @@ def RiproduciEffetto(nome_preset, base_vol=0.4, sync=True):
     Restituisce True se il suono e' partito.
     """
     return Acusticator.play(nome_preset, sync=sync, volume=base_vol)
-
-
-def blocchi(testo, larghezza=LARGHEZZA_BLOCCO):
-    """Spezza un testo in righe di circa larghezza caratteri, senza tagliare le parole."""
-    righe = []
-    corrente = ""
-    for parola in testo.split():
-        if not corrente:
-            corrente = parola
-        elif len(corrente) + 1 + len(parola) <= larghezza:
-            corrente += " " + parola
-        else:
-            righe.append(corrente)
-            corrente = parola
-    if corrente:
-        righe.append(corrente)
-    return righe
-
-
-def dillo(testo):
-    """Stampa un testo informativo in blocchi di circa quaranta caratteri."""
-    for riga in blocchi(testo):
-        print(riga)
-
-
-def impacchetta(voci, larghezza=LARGHEZZA_BLOCCO):
-    """Raggruppa voci brevi in righe di circa larghezza caratteri.
-
-    A differenza di blocchi, che puo' andare a capo dentro una voce, qui il
-    taglio cade sempre fra una voce e l'altra: una riga che finisce con
-    "T" e riprende con "cella 41" non si legge.
-    """
-    righe = []
-    corrente = ""
-    for voce in voci:
-        if not corrente:
-            corrente = voce
-        elif len(corrente) + 2 + len(voce) <= larghezza:
-            corrente += ", " + voce
-        else:
-            righe.append(corrente)
-            corrente = voce
-    if corrente:
-        righe.append(corrente)
-    return righe
 
 
 def ValoreIniziale(stato):
@@ -362,16 +314,15 @@ def _migra_dal_pickle():
         progetto = _valida_progetto(grezzo)
     except ValueError as e:
         return {}, f"{OLD_RECORDNAME} contiene dati non utilizzabili: {e}", []
-    dillo(f"Trovato il vecchio {OLD_RECORDNAME}.")
-    print("Conversione in formato JSON in corso.")
+    print(f"Trovato il vecchio {OLD_RECORDNAME}: conversione in formato JSON in corso.")
     progetti = {"0": progetto}
     if not Salva(progetti, annuncia=False):
         return {}, "la conversione non è riuscita a scrivere il nuovo archivio", []
     try:
         os.rename(PERCORSO_OLD, PERCORSO_OLD + ".bak")
-        dillo(f"Il vecchio file è stato rinominato in {OLD_RECORDNAME}.bak per sicurezza.")
+        print(f"Il vecchio file è stato rinominato in {OLD_RECORDNAME}.bak per sicurezza.")
     except OSError as e:
-        dillo(f"Il vecchio file non è stato rinominato: {e}")
+        print(f"Il vecchio file non è stato rinominato: {e}")
     return progetti, None, []
 
 
@@ -405,11 +356,9 @@ def ConfiguraTappe(stato):
     ob = stato["obiettivo"]
     ampiezza = abs(ob - vi)
     if ampiezza == 0:
-        print("Valore iniziale e obiettivo coincidono:")
-        print("non c'è nessun percorso da dividere.")
+        print("Valore iniziale e obiettivo coincidono: non c'è nessun percorso da dividere.")
         return None
-    print("Suddivisione del percorso in tappe.")
-    dillo(f"Si va da {vi:+.2f} a {ob:+.2f}, per un'ampiezza di {ampiezza:.2f}.")
+    print(f"Suddivisione del percorso in tappe: si va da {vi:+.2f} a {ob:+.2f}, per un'ampiezza di {ampiezza:.2f}.")
     modi = {"numero": "Dico io quante tappe voglio", "ampiezza": "Dico io quanto è larga una tappa"}
     while True:
         modo = menu(d=modi, p="Come preferisci? ", show=True, keyslist=True)
@@ -427,19 +376,20 @@ def ConfiguraTappe(stato):
         else:
             minima = ampiezza / TAPPE_MAX
             massima = ampiezza / TAPPE_MIN
-            dillo(f"Una tappa può essere larga da {minima:.2f} a {massima:.2f}.")
+            print(f"Una tappa può essere larga da {minima:.2f} a {massima:.2f}.")
             larghezza = dgt(prompt=f"Larghezza? invio={minima:.2f}> ", kind="f", fmin=minima, fmax=massima, default=minima)
             if larghezza <= 0:
                 continue
             tappe = max(TAPPE_MIN, min(TAPPE_MAX, round(ampiezza / larghezza)))
         passo = (ob - vi) / tappe
-        print(f"Risultano {tappe} tappe.")
-        print(f"Una ogni {passo:+.2f} di valore.")
+        print(f"Risultano {tappe} tappe, una ogni {passo:+.2f} di valore.")
         # L'elenco sta qui, dove serve a decidere, e non piu' in fondo alla
         # barra, dove arrivava quando ormai non c'era piu' niente da scegliere.
-        for k in range(1, tappe + 1):
-            coda = ", il traguardo" if k == tappe else ""
-            print(f"Tappa {k}, {vi + (ob - vi) * k / tappe:+.2f}{coda}")
+        # Sta su una riga sola, che la console manda a capo da se': una tappa
+        # per riga costringeva il display braille a uno spostamento ogni
+        # quindici caratteri.
+        elenco = ", ".join(f"tappa {k} a {vi + (ob - vi) * k / tappe:+.2f}" for k in range(1, tappe + 1))
+        print(f"Le tappe: {elenco}, che è il traguardo.")
         if enter_escape(prompt="Va bene? invio sì, escape no> "):
             RiproduciEffetto("roger_cw_conferma")
             return tappe
@@ -455,7 +405,7 @@ def Inizializzazione():
         datainizio = DigitaData()
         if datainizio <= dt.datetime.now():
             break
-        dillo("Attenzione: la data di inizio è nel futuro. I valori registrati da oggi risulterebbero anteriori all'inizio del progetto.")
+        print("Attenzione: la data di inizio è nel futuro. I valori registrati da oggi risulterebbero anteriori all'inizio del progetto.")
         if enter_escape(prompt="La tengo così? invio sì, escape no> "):
             break
     print("Molto bene, ora inserisci la data in cui prevedi di terminarlo.")
@@ -464,7 +414,7 @@ def Inizializzazione():
         if datafine > datainizio:
             break
         RiproduciEffetto("rifiuto")
-        dillo("La data di fine deve essere successiva a quella di inizio. Riprova.")
+        print("La data di fine deve essere successiva a quella di inizio. Riprova.")
     valore = dgt(prompt="Inserisci il valore di partenza:> ", kind="f", fmin=VALORE_MIN, fmax=VALORE_MAX)
     valori = {datainizio: [valore, ""]}
     while True:
@@ -472,7 +422,7 @@ def Inizializzazione():
         if obiettivo != valore:
             break
         RiproduciEffetto("rifiuto")
-        dillo("L'obiettivo non può essere uguale al valore di partenza. Riprova.")
+        print("L'obiettivo non può essere uguale al valore di partenza. Riprova.")
     stato = {
         "prjnome": prjnome,
         "prjdesc": prjdesc,
@@ -485,7 +435,7 @@ def Inizializzazione():
     stato["tappe"] = ConfiguraTappe(stato)
     if stato["tappe"] is None:
         stato["tappe"] = TAPPE_PREDEFINITE
-        dillo(f"Nessuna scelta: uso {TAPPE_PREDEFINITE} tappe. Le puoi rivedere dal comando dividi.")
+        print(f"Nessuna scelta: uso {TAPPE_PREDEFINITE} tappe. Le puoi rivedere dal comando dividi.")
     return stato
 
 
@@ -505,7 +455,7 @@ def Reset(progetti):
     ha passato, cioe' main, deve continuare a vedere lo stesso archivio,
     altrimenti un Control C dopo il reset salverebbe quello vecchio.
     """
-    dillo("ATTENZIONE! Sei sicuro di voler cancellare TUTTI i progetti? L'operazione è irreversibile!")
+    print("ATTENZIONE! Sei sicuro di voler cancellare TUTTI i progetti? L'operazione è irreversibile!")
     attesa = dgt(prompt="Digita 'sicuro'> ", kind="s", smin=0, smax=12, default="n")
     if attesa != "sicuro":
         print("Non tocco nulla.")
@@ -555,11 +505,13 @@ def StampaTabellino(valore_iniziale, valore_attuale, valore_ideale, obiettivo):
             gruppi[-1][1].append(nome)
         else:
             gruppi.append((valore, [nome]))
-    print("Tabellino di marcia, in scala:")
+    pezzi = []
     for i, (valore, nomi) in enumerate(gruppi):
-        print(f"{' e '.join(nomi)}: {valore:+.2f}")
+        pezzo = f"{' e '.join(nomi)} {valore:+.2f}"
         if i < len(gruppi) - 1:
-            print(f"distanza {gruppi[i + 1][0] - valore:+.2f}")
+            pezzo += f", distanza {gruppi[i + 1][0] - valore:+.2f}"
+        pezzi.append(pezzo)
+    print(f"Tabellino di marcia, in scala: {'; '.join(pezzi)}.")
 
 
 def VPTempo(stato, show=False):
@@ -569,10 +521,7 @@ def VPTempo(stato, show=False):
     durata = datafine - datainizio
     if show:
         RiproduciEffetto("mostra")
-        print("Progressi sulla linea del tempo.")
-        print(f"Inizio: {Humanize(datainizio)}")
-        print(f"Fine: {Humanize(datafine)}")
-        print(f"Durata: {durata.days} giorni")
+        print(f"Progressi sulla linea del tempo: inizio {Humanize(datainizio)}, fine {Humanize(datafine)}, durata {durata.days} giorni.")
     oggi = dt.datetime.now().replace(microsecond=0)
     d1 = datainizio.timestamp()
     d2 = datafine.timestamp()
@@ -580,10 +529,7 @@ def VPTempo(stato, show=False):
     if show:
         giorni_trascorsi = (oggi - datainizio).days
         frazione = frac(giorni_trascorsi, durata.days) if durata.days > 0 else "1/1"
-        print(f"Oggi: {Humanize(oggi)}")
-        print(f"Giorno {giorni_trascorsi} di {durata.days}")
-        print(f"Tempo trascorso: {percentuale_tempo:+.2f}%")
-        print(f"In frazione: {frazione}")
+        print(f"Oggi è {Humanize(oggi)}, giorno {giorni_trascorsi} di {durata.days}: tempo trascorso {percentuale_tempo:+.2f}%, in frazione {frazione}.")
     return percentuale_tempo
 
 
@@ -593,10 +539,9 @@ def VPObiettivo(stato, show=False):
     obiettivo = stato["obiettivo"]
     if show:
         RiproduciEffetto("mostra")
-        print("Progressi rispetto all'obiettivo.")
     if not valori:
         if show:
-            print("Nessun valore registrato.")
+            print("Progressi rispetto all'obiettivo: nessun valore registrato.")
         return 0.0
     valoreiniziale = ValoreIniziale(stato)
     valoreattuale = ValoreAttuale(stato)
@@ -606,19 +551,14 @@ def VPObiettivo(stato, show=False):
     else:
         percentuale_obiettivo = (valoreattuale - valoreiniziale) * 100 / diff_obiettivo
     if show:
-        print(f"Valore iniziale: {valoreiniziale:+.2f}")
-        print(f"Valore attuale: {valoreattuale:+.2f}")
-        print(f"Obiettivo: {obiettivo:+.2f}")
-        print(f"Da coprire in tutto: {diff_obiettivo:+.2f}")
+        print(
+            f"Progressi rispetto all'obiettivo: valore iniziale {valoreiniziale:+.2f}, attuale {valoreattuale:+.2f}, obiettivo {obiettivo:+.2f}, da coprire in tutto {diff_obiettivo:+.2f}."
+        )
         ottenuto = valoreattuale - valoreiniziale
         frazione = frac(ottenuto / diff_obiettivo).limit_denominator() if diff_obiettivo != 0 else "1/1"
-        print(f"Ottenuto: {ottenuto:+.2f}")
-        print(f"Pari al {percentuale_obiettivo:+.2f}%")
-        print(f"In frazione: {frazione}")
         dafare = obiettivo - valoreattuale
         perc_dafare = dafare * 100 / diff_obiettivo if diff_obiettivo != 0 else 0.0
-        print(f"Da fare: {dafare:+.2f}")
-        print(f"Pari al {perc_dafare:+.2f}%")
+        print(f"Ottenuto {ottenuto:+.2f}, pari al {percentuale_obiettivo:+.2f}%, in frazione {frazione}. Da fare {dafare:+.2f}, pari al {perc_dafare:+.2f}%.")
     return percentuale_obiettivo
 
 
@@ -677,16 +617,15 @@ def StampaProiezioni(valori, obiettivo, valore_iniziale):
     viste = (("storica, su tutti i dati", None), (f"recente, sugli ultimi {PUNTI_PROIEZIONE_RECENTE} dati", PUNTI_PROIEZIONE_RECENTE))
     for etichetta, punti in viste:
         data, velocita = CalcolaProiezione(valori, obiettivo, n_punti=punti)
-        print(f"Proiezione {etichetta}:")
         if data:
-            print(f"Traguardo il {Humanize(data)}")
-            print(f"Velocità {velocita:+.2f} al giorno")
+            esito = f"traguardo il {Humanize(data)}, velocità {velocita:+.2f} al giorno"
         elif velocita is not None:
-            print("Obiettivo già raggiunto." if raggiunto else "Di questo passo non si arriva.")
-            print(f"Velocità {velocita:+.2f} al giorno")
+            esito = "obiettivo già raggiunto" if raggiunto else "di questo passo non si arriva"
+            esito += f", velocità {velocita:+.2f} al giorno"
         else:
-            print("Dati insufficienti o troppo ravvicinati:")
-            print("servono 2 valori a un giorno di distanza.")
+            esito = "dati insufficienti o troppo ravvicinati, servono 2 valori a un giorno di distanza"
+        print(f"Proiezione {etichetta}: {esito}.")
+
 
 
 def RigheRegistro(valori):
@@ -731,13 +670,12 @@ def Cancelladato(stato):
     ricerca = [k for k, v in valori.items() if v[0] == valore]
     if not ricerca:
         RiproduciEffetto("rifiuto")
-        dillo("Non è stato trovato il valore specificato all'interno del registro.")
+        print("Non è stato trovato il valore specificato all'interno del registro.")
         return stato, False
     if len(ricerca) == 1:
         chiave = ricerca[0]
     else:
-        print(f"Sono stati trovati {len(ricerca)} valori.")
-        print("Digita il numero di quello da eliminare.")
+        print(f"Sono stati trovati {len(ricerca)} valori: digita il numero di quello da eliminare.")
         multi = {}
         for contatore, j in enumerate(sorted(ricerca), start=1):
             print(f"({contatore}) - in data - {Humanize(j)};")
@@ -751,8 +689,7 @@ def Cancelladato(stato):
         RiproduciEffetto("rifiuto")
         print("Impossibile eliminare il valore iniziale.")
         return stato, False
-    print(f"Trovato il valore {valore:+.2f}.")
-    print(f"Registrato in data: {Humanize(chiave)}.")
+    print(f"Trovato il valore {valore:+.2f}, registrato {Humanize(chiave)}.")
     del valori[chiave]
     RiproduciEffetto("cancellato")
     print(f"Dato eliminato. Restano {len(valori)} records.")
@@ -782,8 +719,7 @@ def _annuncia_tappe(stato, prima, dopo):
         if dopo - prima == 1:
             print(f"Tappa {dopo} raggiunta, su {stato['tappe']}!")
         else:
-            print(f"Superate {dopo - prima} tappe in un colpo,")
-            print(f"dalla {prima + 1} alla {dopo}.")
+            print(f"Superate {dopo - prima} tappe in un colpo, dalla {prima + 1} alla {dopo}.")
     else:
         RiproduciEffetto("spirale_discendente")
         if dopo == 0:
@@ -838,21 +774,19 @@ def Nuovodato(stato):
             # perdere, salire festeggiava e scendere veniva respinto.
             if sopra == (stato["obiettivo"] >= ValoreIniziale(stato)):
                 RiproduciEffetto("vittoria", base_vol=0.2)
-                print(f"Nuovo record: {valore:+.2f}")
+                annuncio = "Nuovo record"
             else:
                 RiproduciEffetto("rifiutato")
-                print(f"Mai così indietro: {valore:+.2f}")
+                annuncio = "Mai così indietro"
             if sopra:
-                print(f"Supera il massimo {massimo:+.2f}")
-                print(f"di {valore - massimo:.2f}.")
+                print(f"{annuncio}: {valore:+.2f}, supera il massimo {massimo:+.2f} di {valore - massimo:.2f}.")
             else:
-                print(f"Scende sotto il minimo {minimo:+.2f}")
-                print(f"di {minimo - valore:.2f}.")
+                print(f"{annuncio}: {valore:+.2f}, scende sotto il minimo {minimo:+.2f} di {minimo - valore:.2f}.")
         else:
             RiproduciEffetto("controllo_ok")
-            print(f"Valore {valore:+.2f}, nell'intervallo noto.")
-            print(f"Dal minimo {minimo:+.2f} dista {valore - minimo:+.2f}")
-            print(f"Dal massimo {massimo:+.2f} dista {massimo - valore:+.2f}")
+            print(
+                f"Valore {valore:+.2f}, nell'intervallo noto: dal minimo {minimo:+.2f} dista {valore - minimo:+.2f}, dal massimo {massimo:+.2f} dista {massimo - valore:+.2f}."
+            )
     tappe_prima = _tappe_raggiunte(stato, ValoreAttuale(stato))
     adesso = dt.datetime.now().replace(microsecond=0)
     # Due valori nello stesso secondo avrebbero la stessa chiave e uno dei
@@ -886,13 +820,13 @@ def Nuovodato(stato):
     else:
         RiproduciEffetto("salita_ideale")
         giudizio = "superiore"
-    print(f"Valore ideale di oggi: {valore_ideale:+.2f}")
     if giudizio is None:
-        print("Sei esattamente in pari con la tabella.")
+        print(f"Valore ideale di oggi {valore_ideale:+.2f}: sei esattamente in pari con la tabella.")
     else:
-        print(f"Il valore inserito è {giudizio}")
-        print(f"di {abs(diff_ideale):.2f}.")
-        print(f"Deviazione {perc_diff_ideale:+.2f}% sull'obiettivo.")
+        print(
+            f"Valore ideale di oggi {valore_ideale:+.2f}: il valore inserito è {giudizio} di {abs(diff_ideale):.2f}, deviazione {perc_diff_ideale:+.2f}% sull'obiettivo."
+        )
+
     StampaTabellino(valoreiniziale, valore, valore_ideale, obiettivo)
     StampaProiezioni(valori, obiettivo, valoreiniziale)
     percentuale_obiettivo = VPObiettivo(stato)
@@ -914,8 +848,8 @@ def MostraManuale():
         manuale(NOME_MANUALE, nome="Manuale")
     except OSError as e:
         RiproduciEffetto("rifiuto")
-        print("Il manuale non si apre.")
-        dillo(str(e))
+        print(f"Il manuale non si apre: {e}")
+
 
 
 def SelezionaProgetto(progetti):
@@ -949,9 +883,7 @@ def SelezionaProgetto(progetti):
 
 def Cambiafine(stato):
     """Sposta la data di fine progetto."""
-    print("Vecchia data di fine progetto:")
-    print(Humanize(stato["datafine"]))
-    print("Nuova data di fine progetto...")
+    print(f"Vecchia data di fine progetto: {Humanize(stato['datafine'])}. Inserisci la nuova.")
     while True:
         nuova_data = DigitaData()
         if nuova_data > stato["datainizio"]:
@@ -959,7 +891,7 @@ def Cambiafine(stato):
             RiproduciEffetto("roger_cw_conferma")
             return stato
         RiproduciEffetto("rifiuto")
-        dillo("La data di fine deve essere successiva a quella di inizio. Riprova.")
+        print("La data di fine deve essere successiva a quella di inizio. Riprova.")
 
 
 def VConfronto(stato):
@@ -980,15 +912,14 @@ def VConfronto(stato):
     else:
         giudizio = "variazione troppo lenta, accelerare."
         RiproduciEffetto("rifiutato")
-    print(f"Tempo: {ot:+.2f}%")
-    print(f"Valore: {op:+.2f}%")
     if scarto > 0:
-        print(f"Il tempo è avanti di {scarto:.2f}%")
+        confronto = f"il tempo è avanti di {scarto:.2f}%"
     elif scarto < 0:
-        print(f"Il valore è avanti di {-scarto:.2f}%")
+        confronto = f"il valore è avanti di {-scarto:.2f}%"
     else:
-        print("Tempo e valore sono in pari.")
-    dillo(giudizio)
+        confronto = "tempo e valore sono in pari"
+    print(f"Tempo {ot:+.2f}%, valore {op:+.2f}%: {confronto}; {giudizio}")
+
 
 
 def _lunghezza_barra(tappe):
@@ -1160,45 +1091,43 @@ def RaccontaSituazione(stato, misure):
     tappe = misure["tappe"]
     valori_tappe = misure["valori_tappe"]
     raggiunte = misure["raggiunte"]
-    print(f"Situazione di {stato['prjnome']}.")
-    print(f"Si va da {vi:+.2f} a {ob:+.2f}.")
-    print(f"Sei a {attuale:+.2f}.")
-    print(f"Percorso coperto: {f_attuale * 100:.2f}%.")
-    print(f"Tempo trascorso: {f_tempo * 100:.2f}%.")
-    print(f"Valore giusto adesso: {misure['ideale']:+.2f}.")
+    print(
+        f"Situazione di {stato['prjnome']}: si va da {vi:+.2f} a {ob:+.2f} e sei a {attuale:+.2f}. "
+        f"Percorso coperto {f_attuale * 100:.2f}%, tempo trascorso {f_tempo * 100:.2f}%, valore giusto adesso {misure['ideale']:+.2f}."
+    )
     scarto = (f_attuale - f_tempo) * 100
     if abs(scarto) < 0.005:
         print("Sei esattamente in pari con il tempo.")
     else:
         verso = "avanti" if scarto > 0 else "indietro"
-        print(f"Sei {verso} sul tempo di {abs(scarto):.2f} punti,")
-        print(f"cioè di {abs(attuale - misure['ideale']):.2f} di valore.")
-    print(f"Tappe: {tappe}, una ogni {(ob - vi) / tappe:+.2f}.")
+        print(f"Sei {verso} sul tempo di {abs(scarto):.2f} punti, cioè di {abs(attuale - misure['ideale']):.2f} di valore.")
+    intestazione = f"Tappe: {tappe}, una ogni {(ob - vi) / tappe:+.2f}."
+    prima = f"tappa 1 a {valori_tappe[0]:+.2f}, mancano {abs(valori_tappe[0] - attuale):.2f}"
     if f_attuale < 0:
-        dillo(f"Sei tornato indietro rispetto alla partenza di {abs(attuale - vi):.2f}.")
-        print(f"Tappa 1, {valori_tappe[0]:+.2f}, mancano {abs(valori_tappe[0] - attuale):.2f}.")
+        print(f"{intestazione} Sei tornato indietro rispetto alla partenza di {abs(attuale - vi):.2f}; {prima}.")
     elif raggiunte == 0:
-        print("Non hai ancora raggiunto la prima tappa.")
-        print(f"Dalla partenza ti sei mosso di {abs(attuale - vi):.2f}.")
-        print(f"Tappa 1, {valori_tappe[0]:+.2f}, mancano {abs(valori_tappe[0] - attuale):.2f}.")
-        print(f"Avanzamento nella tappa 1: {f_attuale * tappe * 100:.2f}%.")
+        print(
+            f"{intestazione} Non hai ancora raggiunto la prima tappa: dalla partenza ti sei mosso di {abs(attuale - vi):.2f}; "
+            f"{prima}; avanzamento nella tappa 1 {f_attuale * tappe * 100:.2f}%."
+        )
     elif raggiunte >= tappe:
-        print(f"Hai superato tutte le {tappe} tappe.")
         oltre = abs(attuale - ob)
         if oltre < 0.005:
-            print(f"Sei esattamente sul traguardo, {ob:+.2f}.")
+            dove = f"sei esattamente sul traguardo, {ob:+.2f}"
         else:
-            print(f"Traguardo {ob:+.2f}, passato di {oltre:.2f}.")
+            dove = f"traguardo {ob:+.2f}, passato di {oltre:.2f}"
+        print(f"{intestazione} Hai superato tutte le {tappe} tappe: {dove}.")
     else:
         superata = valori_tappe[raggiunte - 1]
         prossima = valori_tappe[raggiunte]
-        print(f"Sei fra la tappa {raggiunte} e la {raggiunte + 1}.")
-        print(f"Tappa {raggiunte}, {superata:+.2f}, superata di {abs(attuale - superata):.2f}.")
-        print(f"Tappa {raggiunte + 1}, {prossima:+.2f}, mancano {abs(prossima - attuale):.2f}.")
         fatta = (f_attuale * tappe - raggiunte) * 100
-        print(f"Avanzamento nella tappa {raggiunte + 1}: {fatta:.2f}%.")
-    print(f"Minimo {misure['minimo']:+.2f}, massimo {misure['massimo']:+.2f}.")
-    print(f"Media {misure['media']:+.2f} su {len(stato['valori'])} valori.")
+        print(
+            f"{intestazione} Sei fra la tappa {raggiunte} e la {raggiunte + 1}: "
+            f"tappa {raggiunte} a {superata:+.2f}, superata di {abs(attuale - superata):.2f}; "
+            f"tappa {raggiunte + 1} a {prossima:+.2f}, mancano {abs(prossima - attuale):.2f}; "
+            f"avanzamento nella tappa {raggiunte + 1} {fatta:.2f}%."
+        )
+    print(f"Minimo {misure['minimo']:+.2f}, massimo {misure['massimo']:+.2f}, media {misure['media']:+.2f} su {len(stato['valori'])} valori.")
 
 
 def MostraTappe(stato):
@@ -1216,8 +1145,8 @@ def MostraTappe(stato):
     span = ob - vi
     if span == 0:
         RiproduciEffetto("rifiuto")
-        print("Valore iniziale e obiettivo coincidono:")
-        print("non c'è nessuna scala da disegnare.")
+        print("Valore iniziale e obiettivo coincidono: non c'è nessuna scala da disegnare.")
+
         return False
     cambiato = False
     if not stato.get("tappe"):
@@ -1284,15 +1213,16 @@ def MostraTappe(stato):
     # simboli da toccare, quindi non vanno spezzate ogni quaranta caratteri.
     voci = [("<", 0.0), (">", 1.0), ("O", f_attuale), ("T", f_tempo), ("D", f_media), ("X", f_max), ("M", f_min)]
     print("Nella barra: " + ", ".join(_voce_legenda(segno, frazione, lunghezza) for segno, frazione in voci) + ".")
-    print("Dove due o più marcatori cadono nella stessa cella, la barra li scrive uniti, prima il numero della tappa e poi gli altri segni.")
+    regole = "Dove due o più marcatori cadono nella stessa cella, la barra li scrive uniti, prima il numero della tappa e poi gli altri segni."
     prima, dopo = _estensione(marcatori, lunghezza)
     misura = f"Barra: {lunghezza} celle"
     if prima or dopo:
-        print("Prima di < e dopo > la barra continua con i trattini, sulla stessa scala, fino ai marcatori che cadono fuori dal percorso.")
+        regole += " Prima di < e dopo > la barra continua con i trattini, sulla stessa scala, fino ai marcatori che cadono fuori dal percorso."
         if prima:
             misura += f", più {prima} prima dell'inizio"
         if dopo:
             misura += f", più {dopo} oltre il traguardo"
+    print(regole)
     print(f"{misura}, su {len(righe_barra)} righe da {LARGHEZZA_RIGA}.")
     StampaBarraBraille(righe_barra)
     return cambiato
@@ -1331,36 +1261,32 @@ def Infostatistiche(stato, annuncia=True):
     if len(valori) < MINIMO_VALORI_STATISTICHE:
         if annuncia:
             RiproduciEffetto("rifiuto")
-        dillo(f"Sono stati registrati pochi valori per mostrare le statistiche, ne servono almeno {MINIMO_VALORI_STATISTICHE}.")
+        print(f"Sono stati registrati pochi valori per mostrare le statistiche, ne servono almeno {MINIMO_VALORI_STATISTICHE}.")
         return
     if annuncia:
         RiproduciEffetto("mostra")
-    print("Informazioni statistiche sui valori.")
     lista_valori = [v[0] for v in valori.values()]
-    print(f"Numero di records: {len(lista_valori)}")
+    print(f"Informazioni statistiche su {len(lista_valori)} valori.")
     piupiccolo = min(lista_valori)
     piugrande = max(lista_valori)
     listapiccoli = [k for k, v in valori.items() if v[0] == piupiccolo]
     listagrandi = [k for k, v in valori.items() if v[0] == piugrande]
-    print(f"Valore massimo {piugrande:+.2f}, {len(listagrandi)} {_volte(len(listagrandi))}.")
-    for j in sorted(listagrandi):
-        print(f"In data: {Humanize(j)};")
-    print(f"Valore minimo {piupiccolo:+.2f}, {len(listapiccoli)} {_volte(len(listapiccoli))}.")
-    for j in sorted(listapiccoli):
-        print(f"In data: {Humanize(j)};")
-    print(f"Media aritmetica: {statistics.fmean(lista_valori):+.2f}")
-    print(f"Mediana bassa: {statistics.median_low(lista_valori):+.2f}")
-    print(f"Mediana: {statistics.median(lista_valori):+.2f}")
-    print(f"Mediana alta: {statistics.median_high(lista_valori):+.2f}")
-    print(f"Moda: {statistics.mode(lista_valori):+.2f}")
-    print(f"Deviazione standard: {statistics.stdev(lista_valori):+.2f}")
-    print(f"Varianza: {statistics.variance(lista_valori):+.2f}")
+    # Le date si separano con il punto e virgola, perche' Humanize ha gia'
+    # una virgola dentro, fra il giorno e l'ora.
+    for nome, estremo, date in (("massimo", piugrande, listagrandi), ("minimo", piupiccolo, listapiccoli)):
+        quando = "; ".join(Humanize(j) for j in sorted(date))
+        print(f"Valore {nome} {estremo:+.2f}, {len(date)} {_volte(len(date))}: {quando}.")
+    print(
+        f"Media aritmetica {statistics.fmean(lista_valori):+.2f}, mediana bassa {statistics.median_low(lista_valori):+.2f}, "
+        f"mediana {statistics.median(lista_valori):+.2f}, mediana alta {statistics.median_high(lista_valori):+.2f}, moda {statistics.mode(lista_valori):+.2f}."
+    )
+    print(f"Deviazione standard {statistics.stdev(lista_valori):+.2f}, varianza {statistics.variance(lista_valori):+.2f}.")
     _stampa_quartili(sorted(valori.items(), key=lambda x: x[1][0]), "per valore")
     _stampa_quartili(sorted(valori.items()), "per tempo")
     date_ordinate = sorted(valori)
     primo_valore = valori[date_ordinate[0]][0]
     ultimo_valore = valori[date_ordinate[-1]][0]
-    print(f"Variazione totale: {ultimo_valore - primo_valore:+.2f}")
+    variazione = f"Variazione totale {ultimo_valore - primo_valore:+.2f}."
     salti = []
     aumenti = 0
     cali = 0
@@ -1376,29 +1302,30 @@ def Infostatistiche(stato, annuncia=True):
     if salti:
         salto_max = max(salti, key=lambda x: x[0])
         salto_min = min(salti, key=lambda x: x[0])
-        print(f"Passaggi: {aumenti} in aumento, {cali} in calo,")
-        print(f"{len(salti) - aumenti - cali} stabili.")
+        print(f"{variazione} Passaggi: {aumenti} in aumento, {cali} in calo, {len(salti) - aumenti - cali} stabili.")
+        picchi = []
         if salto_max[0] > 0:
-            print(f"Picco di aumento: {salto_max[0]:+.2f}")
-            print(f"In data {Humanize(salto_max[1])}.")
+            picchi.append(f"Picco di aumento {salto_max[0]:+.2f}, {Humanize(salto_max[1])}.")
         if salto_min[0] < 0:
-            print(f"Picco di calo: {salto_min[0]:+.2f}")
-            print(f"In data {Humanize(salto_min[1])}.")
-        print(f"Variazione media per passo: {statistics.fmean([x[0] for x in salti]):+.2f}")
+            picchi.append(f"Picco di calo {salto_min[0]:+.2f}, {Humanize(salto_min[1])}.")
+        if picchi:
+            print(" ".join(picchi))
         media_tempo_sec = statistics.fmean(tempi_tra_inserimenti)
         giorni_media = int(media_tempo_sec // 86400)
         ore_media = int((media_tempo_sec % 86400) // 3600)
-        print(f"Un inserimento ogni {giorni_media} giorni")
-        print(f"e {ore_media} ore.")
+        print(
+            f"Variazione media per passo {statistics.fmean([x[0] for x in salti]):+.2f}, un inserimento ogni {giorni_media} giorni e {ore_media} ore."
+        )
+    else:
+        print(variazione)
     StampaProiezioni(valori, obiettivo, primo_valore)
     oggi = dt.datetime.now().replace(microsecond=0)
     giorni_rimanenti = (stato["datafine"] - oggi).total_seconds() / 86400
     da_fare_oggi = obiettivo - ultimo_valore
     if giorni_rimanenti > 0 and da_fare_oggi != 0:
-        print("Tabella di marcia: occorre acquisire")
-        print(f"{da_fare_oggi / giorni_rimanenti:+.2f} al giorno.")
+        print(f"Tabella di marcia: occorre acquisire {da_fare_oggi / giorni_rimanenti:+.2f} al giorno.")
     elif giorni_rimanenti <= 0 and da_fare_oggi != 0:
-        dillo("Tempo scaduto: non c'è più un progresso giornaliero da calcolare.")
+        print("Tempo scaduto: non c'è più un progresso giornaliero da calcolare.")
 
 
 def _stampa_quartili(dati_ordinati, etichetta):
@@ -1410,9 +1337,11 @@ def _stampa_quartili(dati_ordinati, etichetta):
             continue
         chunk_vals = [item[1][0] for item in chunk]
         chunk_dates = [item[0] for item in chunk]
-        print(f"Q{idx}, da {Humanize(min(chunk_dates))}")
-        print(f"a {Humanize(max(chunk_dates))}")
-        print(f"minimo {min(chunk_vals):+.2f}, media {statistics.fmean(chunk_vals):+.2f}, massimo {max(chunk_vals):+.2f}")
+        print(
+            f"Q{idx}, da {Humanize(min(chunk_dates))} a {Humanize(max(chunk_dates))}: "
+            f"minimo {min(chunk_vals):+.2f}, media {statistics.fmean(chunk_vals):+.2f}, massimo {max(chunk_vals):+.2f}."
+        )
+
 
 
 def _nome_file_report(prjnome):
@@ -1444,8 +1373,7 @@ def ConcludiProgetto(stato):
     prjnome = stato["prjnome"]
     valori = stato["valori"]
     obiettivo = stato["obiettivo"]
-    print("Il progetto è concluso.")
-    print("Creazione del report finale...")
+    print("Il progetto è concluso: creazione del report finale.")
     RiproduciEffetto("vittoria")
     valoreiniziale = ValoreIniziale(stato) if valori else 0
     valoreattuale = ValoreAttuale(stato) if valori else 0
@@ -1487,8 +1415,7 @@ def ConcludiProgetto(stato):
         RiproduciEffetto("rifiuto")
         print(f"Errore nella creazione del report: {e}")
         return False
-    print(f"Report salvato come {os.path.basename(percorso)}.")
-    print(f"Progetto '{prjnome}' terminato.")
+    print(f"Report salvato come {os.path.basename(percorso)}. Progetto '{prjnome}' terminato.")
     return True
 
 
@@ -1500,7 +1427,7 @@ def GestisciConclusione(progetti, id_corrente):
     """
     stato = progetti[id_corrente]
     if not ConcludiProgetto(stato):
-        dillo("Il progetto resta nell'archivio: prima va risolto il problema del report.")
+        print("Il progetto resta nell'archivio: prima va risolto il problema del report.")
         return id_corrente, True
     prj_concluso = stato["prjnome"]
     del progetti[id_corrente]
@@ -1516,7 +1443,7 @@ def GestisciConclusione(progetti, id_corrente):
     print(f"Obiettivo '{prj_concluso}' concluso.")
     if len(progetti) == 1:
         nuovo_id = next(iter(progetti))
-        dillo(f"Resta un solo obiettivo attivo, '{progetti[nuovo_id]['prjnome']}', che viene caricato automaticamente.")
+        print(f"Resta un solo obiettivo attivo, '{progetti[nuovo_id]['prjnome']}', che viene caricato automaticamente.")
         return nuovo_id, True
     return SelezionaProgetto(progetti), True
 
@@ -1526,7 +1453,7 @@ def Suona(stato, chiedi_durata=False, portamento=True):
     valori = stato["valori"]
     if len(valori) < SUONO_MIN_VALORI:
         RiproduciEffetto("rifiuto")
-        dillo(f"Per ascoltare l'andamento servono almeno {SUONO_MIN_VALORI} valori, e ne sono registrati {len(valori)}.")
+        print(f"Per ascoltare l'andamento servono almeno {SUONO_MIN_VALORI} valori, e ne sono registrati {len(valori)}.")
         return
     dati = [valori[k][0] for k in sorted(valori)]
     durata = min(len(dati) * SUONO_SECONDI_PER_VALORE, SUONO_DURATA_MAX)
@@ -1541,8 +1468,7 @@ def Suona(stato, chiedi_durata=False, portamento=True):
             fmax=SUONO_DURATA_MAX,
             default=proposta,
         )
-    print(f"Riproduzione di {len(dati)} valori,")
-    print(f"durata {durata:.1f} secondi.")
+    print(f"Riproduzione di {len(dati)} valori, durata {durata:.1f} secondi.")
     # I limiti sono gia' rispettati qui sopra; questa rete e' per il giorno
     # in cui sonify li cambiasse ancora, perche' un suono non riuscito non
     # deve chiudere l'applicazione.
@@ -1550,8 +1476,7 @@ def Suona(stato, chiedi_durata=False, portamento=True):
         sonify(dati, duration=durata, ptm=portamento, vol=0.3)
     except ValueError as e:
         RiproduciEffetto("rifiuto")
-        print("Riproduzione non riuscita.")
-        dillo(str(e))
+        print(f"Riproduzione non riuscita: {e}")
 
 
 def CicloComandi(progetti, id_corrente):
@@ -1619,7 +1544,7 @@ def CicloComandi(progetti, id_corrente):
                 Salva(progetti, annuncia=False)
             else:
                 RiproduciEffetto("rifiuto")
-                dillo("L'obiettivo non può coincidere con il valore iniziale.")
+                print("L'obiettivo non può coincidere con il valore iniziale.")
         elif attesa == "salva":
             Salva(progetti)
         elif attesa == "cambia":
@@ -1675,18 +1600,15 @@ def _elimina_corrente(progetti, id_corrente):
     else:
         nuovo_id = SelezionaProgetto(progetti)
     Salva(progetti, annuncia=False)
-    print(f"Obiettivo '{prj_eliminato}' eliminato.")
-    print(f"Passato a {progetti[nuovo_id]['prjnome']}.")
+    print(f"Obiettivo '{prj_eliminato}' eliminato. Passato a {progetti[nuovo_id]['prjnome']}.")
     return nuovo_id
 
 
 def main():
     """Avvio dell'applicazione: aggiornamento, caricamento, scelta dell'obiettivo, comandi."""
     RiproduciEffetto("quinqu_startup")
-    print(f"Welcome a {AUTORE}!")
-    print("Applicazione: Quanto In Quanto (Quinqu)")
-    print(f"Versione {APP_VERSION} del {RELEASE_DATE}")
-    dillo(
+    print(f"Welcome a {AUTORE}! Quanto In Quanto (Quinqu), versione {APP_VERSION} del {RELEASE_DATE}.")
+    print(
         "Un'App per tenere traccia dei progressi in un obiettivo, esprimibile con un valore numerico, da raggiungere in un determinato arco temporale."
     )
     if gestisci_aggiornamento(APP_NAME, APP_VERSION, API_RELEASE):
@@ -1695,18 +1617,17 @@ def main():
     progetti, errore, scartati = Carica()
     if errore:
         RiproduciEffetto("rifiuto")
-        dillo(f"Non riesco a leggere l'archivio: {errore}")
+        print(f"Non riesco a leggere l'archivio: {errore}")
         for riga in scartati:
-            dillo(riga)
-        dillo(f"Il file non è stato toccato: se ne trovi una copia in {RECORDNAME}.bak, prova a ripristinarla a mano.")
-        print("Chiudo senza salvare nulla.")
+            print(riga)
+        print(f"Il file non è stato toccato: se ne trovi una copia in {RECORDNAME}.bak, prova a ripristinarla a mano. Chiudo senza salvare nulla.")
         return
     if scartati:
         RiproduciEffetto("rifiutato")
-        dillo(f"{len(scartati)} obiettivi non sono stati caricati perché malformati:")
+        print(f"{len(scartati)} obiettivi non sono stati caricati perché malformati:")
         for riga in scartati:
-            dillo(riga)
-        dillo(
+            print(riga)
+        print(
             f"Il file su disco è ancora intero. Se prosegui, al primo salvataggio quegli obiettivi non ci saranno più: se ti servono, fai adesso una copia di {RECORDNAME}."
         )
         if not enter_escape(prompt="Proseguo? invio sì, escape no> "):
@@ -1714,7 +1635,7 @@ def main():
             return
     if not progetti:
         RiproduciEffetto("campanellino")
-        dillo(f"{RECORDNAME} non trovato o dati cancellati. Apertura nuova registrazione.")
+        print(f"{RECORDNAME} non trovato o dati cancellati. Apertura nuova registrazione.")
         progetti["0"] = Inizializzazione()
         id_corrente = "0"
         Salva(progetti)
@@ -1722,8 +1643,7 @@ def main():
         RiproduciEffetto("controllo_ok")
         if len(progetti) == 1:
             id_corrente = next(iter(progetti))
-            print("Unico obiettivo trovato e caricato:")
-            print(progetti[id_corrente]["prjnome"])
+            print(f"Unico obiettivo trovato e caricato: {progetti[id_corrente]['prjnome']}.")
         else:
             id_corrente = SelezionaProgetto(progetti)
             Salva(progetti, annuncia=False)
@@ -1737,9 +1657,10 @@ def main():
         CicloComandi(progetti, id_corrente)
     except KeyboardInterrupt:
         print()
-        print("Interruzione da tastiera.")
         if Salva(progetti, annuncia=False):
-            print("Archivio salvato prima di uscire.")
+            print("Interruzione da tastiera: archivio salvato prima di uscire.")
+        else:
+            print("Interruzione da tastiera.")
     else:
         # L'invito a offrire un caffe' compare una volta su cinque, e solo
         # all'uscita voluta: non dopo un Control C ne' dopo un errore.
@@ -1753,5 +1674,5 @@ if __name__ == "__main__":
         print()
         print("Interrotto.")
     except Exception as e:  # noqa: BLE001
-        print("Errore imprevisto, l'App si chiude.")
-        print(f"{type(e).__name__}: {e}")
+        print(f"Errore imprevisto, l'App si chiude. {type(e).__name__}: {e}")
+
