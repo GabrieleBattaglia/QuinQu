@@ -22,7 +22,7 @@ import numpy as np
 from GBUtils import Acusticator, dgt, enter_escape, gestisci_aggiornamento, key, menu, sonify
 
 APP_NAME = "Quinqu"
-APP_VERSION = "4.5.3"
+APP_VERSION = "4.5.4"
 RELEASE_DATE = "2026-09-24"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
@@ -46,13 +46,21 @@ ORIZZONTE_PROIEZIONE_GIORNI = 36500
 SPAN_MINIMO_PROIEZIONE = 86400.0
 # Scarto in punti percentuali entro cui tempo e valore si dicono allineati.
 TOLLERANZA_CONFRONTO = 10.0
-# Barra delle tappe. La prima cella e' l'inizio e l'ultima il traguardo, ma
-# la lunghezza non e' fissa: cresce con il numero delle tappe, perche' due
-# tappe non devono mai toccarsi, e va a capo ogni LARGHEZZA_RIGA caratteri.
-# Le gradazioni del riempimento sono ASCII per restare leggibili sul braille.
+# Barra delle tappe. La prima cella del percorso e' la partenza e l'ultima il
+# traguardo, ma la lunghezza non e' fissa: cresce con il numero delle tappe,
+# perche' due tappe non devono mai toccarsi, e va a capo ogni LARGHEZZA_RIGA
+# caratteri. Le gradazioni del riempimento sono ASCII per restare leggibili
+# sul braille.
 LARGHEZZA_RIGA = 75
 CELLE_PER_TAPPA = 8
 GRADAZIONI = ".:+*#"
+# Un marcatore che cade sotto la partenza o oltre il traguardo sta fuori dal
+# percorso, non sopra i suoi estremi: la barra continua da quella parte sulla
+# stessa scala, con i trattini, fino a lui. Per lato si aggiunge al massimo
+# una riga di celle; piu' in la' il marcatore si ferma sull'ultima e la
+# legenda lo dice fuori scala.
+FUORI_BARRA = "-"
+ESTENSIONE_MAX = LARGHEZZA_RIGA
 TAPPE_MIN = 2
 # Il tetto non limita la scelta ma protegge lo schermo: con cento tappe la
 # barra occupa gia' undici righe e la legenda cento.
@@ -961,9 +969,35 @@ def _lunghezza_barra(tappe):
 
 
 def _cella(frazione, lunghezza):
-    """L'indice di cella, da 0 all'ultima, per una frazione di percorso."""
-    f = max(0.0, min(1.0, frazione))
-    return round(f * (lunghezza - 1))
+    """L'indice di cella per una frazione di percorso.
+
+    Dentro il percorso va da 0, la partenza, a lunghezza meno uno, il
+    traguardo. Una frazione negativa cade prima della partenza, su un indice
+    negativo, e una oltre l'uno cade dopo il traguardo: mai sulle loro celle,
+    nemmeno quando l'arrotondamento ce la porterebbe, perche' un valore sotto
+    la partenza deve stare fuori dalla barra. Fuori non va oltre
+    ESTENSIONE_MAX celle.
+    Fino alla 4.5.3 le frazioni fuori dal percorso finivano schiacciate
+    sulla partenza o sul traguardo, e un minimo sotto la partenza si leggeva
+    come se coincidesse con lei.
+    """
+    cella = round(frazione * (lunghezza - 1))
+    if frazione < 0:
+        return max(-ESTENSIONE_MAX, min(-1, cella))
+    if frazione > 1:
+        return min(lunghezza - 1 + ESTENSIONE_MAX, max(lunghezza, cella))
+    return cella
+
+
+def _fuori_scala(frazione, lunghezza):
+    """Vero se la frazione cadrebbe oltre le celle che la barra aggiunge fuori."""
+    return not -ESTENSIONE_MAX <= round(frazione * (lunghezza - 1)) <= lunghezza - 1 + ESTENSIONE_MAX
+
+
+def _estensione(marcatori, lunghezza):
+    """Quante celle di trattini servono prima della partenza e dopo il traguardo."""
+    celle = [m[0] for m in marcatori]
+    return max(0, -min(celle)), max(0, max(celle) - (lunghezza - 1))
 
 
 def DisegnaBarra(frazione_piena, marcatori, lunghezza):
@@ -975,11 +1009,14 @@ def DisegnaBarra(frazione_piena, marcatori, lunghezza):
     cui la barra non ha piu' lunghezza fissa. Cosi' nessun marcatore resta
     nascosto e non serve nessun carattere speciale per dire che due cose si
     incontrano.
+    Una cella negativa, o oltre l'ultima del percorso, sta fuori: da quella
+    parte la barra si allunga con i trattini fino al marcatore piu' lontano.
     """
+    prima, dopo = _estensione(marcatori, lunghezza)
     pieno = max(0.0, min(1.0, frazione_piena)) * lunghezza
     intere = int(pieno)
     resto = pieno - intere
-    celle = []
+    celle = [FUORI_BARRA] * prima
     for i in range(lunghezza):
         if i < intere:
             celle.append(GRADAZIONI[-1])
@@ -987,11 +1024,12 @@ def DisegnaBarra(frazione_piena, marcatori, lunghezza):
             celle.append(GRADAZIONI[int(resto * (len(GRADAZIONI) - 1))])
         else:
             celle.append(GRADAZIONI[0])
+    celle.extend([FUORI_BARRA] * dopo)
     insieme = {}
     for cella, etichetta, _ordine in sorted(marcatori, key=lambda m: (m[0], m[2])):
         insieme.setdefault(cella, []).append(etichetta)
     for cella, etichette in insieme.items():
-        celle[cella] = "".join(etichette)
+        celle[cella + prima] = "".join(etichette)
     righe = []
     corrente = ""
     for pezzo in celle:
@@ -1052,13 +1090,26 @@ def StampaBarraBraille(righe):
     print()
 
 
-def _riga_marcatore(lettera, nome, frazione, coda, lunghezza):
-    """Una riga di legenda: lettera, cosa indica, in quale cella e con quale valore."""
-    testo = f"{lettera} {nome}, cella {_cella(frazione, lunghezza) + 1}, {coda}"
-    if frazione < 0:
-        testo += ", prima dell'inizio"
-    elif frazione > 1:
-        testo += ", oltre il traguardo"
+def _celle(quante):
+    """Cella o celle, con il numero davanti."""
+    return f"{quante} {'cella' if quante == 1 else 'celle'}"
+
+
+def _voce_legenda(segno, frazione, lunghezza):
+    """Dove sta un marcatore: la sua cella nel percorso, oppure quante celle fuori.
+
+    Fuori dal percorso le celle si contano da < o da >, che e' da dove il
+    dito parte per cercarle: 1 cella prima dell'inizio e' quella accanto a <.
+    """
+    cella = _cella(frazione, lunghezza)
+    if cella < 0:
+        testo = f"{segno} {_celle(-cella)} prima dell'inizio"
+    elif cella >= lunghezza:
+        testo = f"{segno} {_celle(cella - (lunghezza - 1))} oltre il traguardo"
+    else:
+        return f"{segno} cella {cella + 1}"
+    if _fuori_scala(frazione, lunghezza):
+        testo += ", fuori scala"
     return testo
 
 
@@ -1204,17 +1255,17 @@ def MostraTappe(stato):
     # della barra, e in righe intere: sono spiegazioni da leggere, non
     # simboli da toccare, quindi non vanno spezzate ogni quaranta caratteri.
     voci = [("<", 0.0), (">", 1.0), ("O", f_attuale), ("T", f_tempo), ("D", f_media), ("X", f_max), ("M", f_min)]
-    pezzi = []
-    for lettera, frazione in voci:
-        nota = ""
-        if frazione < 0:
-            nota = " prima dell'inizio"
-        elif frazione > 1:
-            nota = " oltre il traguardo"
-        pezzi.append(f"{lettera} cella {_cella(frazione, lunghezza) + 1}{nota}")
-    print("Nella barra: " + ", ".join(pezzi) + ".")
+    print("Nella barra: " + ", ".join(_voce_legenda(segno, frazione, lunghezza) for segno, frazione in voci) + ".")
     print("Dove due o più marcatori cadono nella stessa cella, la barra li scrive uniti, prima il numero della tappa e poi gli altri segni.")
-    print(f"Barra: {lunghezza} celle su {len(righe_barra)} righe da {LARGHEZZA_RIGA}.")
+    prima, dopo = _estensione(marcatori, lunghezza)
+    misura = f"Barra: {lunghezza} celle"
+    if prima or dopo:
+        print("Prima di < e dopo > la barra continua con i trattini, sulla stessa scala, fino ai marcatori che cadono fuori dal percorso.")
+        if prima:
+            misura += f", più {prima} prima dell'inizio"
+        if dopo:
+            misura += f", più {dopo} oltre il traguardo"
+    print(f"{misura}, su {len(righe_barra)} righe da {LARGHEZZA_RIGA}.")
     StampaBarraBraille(righe_barra)
     return cambiato
 

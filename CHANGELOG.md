@@ -3,6 +3,15 @@
 Tutti i cambiamenti e le novità introdotte nelle versioni di Quinqu.
 Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resoconto sta nella cronologia dei commit e nelle release pubblicate su GitHub.
 
+## [4.5.4] - 2026-09-24
+
+### Corretto
+
+- **Sulla barra delle tappe, un valore sotto la partenza sta prima di `<`, non sopra** (issue 5). Fino alla 4.5.3 i marcatori che cadevano fuori dal percorso venivano schiacciati sulla prima o sull'ultima cella: con un obiettivo da 20 a 50, un valore attuale di 18 si leggeva `<OM`, come se coincidesse con la partenza. Ora la barra continua fuori dal percorso sulla stessa scala, con i trattini, fino al marcatore più lontano: `OM----<` dice che valore attuale e minimo stanno cinque celle prima dell'inizio. Lo stesso vale oltre il traguardo, dopo `>`, per un massimo superato o per il tempo scaduto.
+- Un valore anche di poco sotto la partenza cade sempre almeno una cella prima di `<`, anche quando l'arrotondamento lo porterebbe sopra.
+- La legenda conta le celle esterne a partire da `<` o da `>`, per esempio `O 5 celle prima dell'inizio`, e la riga della misura dice quante celle si sono aggiunte e da che parte. Per lato si aggiunge al massimo una riga di settantacinque celle: un marcatore più lontano si ferma lì e la legenda lo dice fuori scala.
+- Tolta una funzione di legenda che non veniva più chiamata da nessuna parte.
+
 ## [4.5.3] - 2026-09-24
 
 ### Modificato
