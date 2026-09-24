@@ -3,6 +3,12 @@
 Tutti i cambiamenti e le novità introdotte nelle versioni di Quinqu.
 Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resoconto sta nella cronologia dei commit e nelle release pubblicate su GitHub.
 
+## [4.6.0] - 2026-09-24
+
+### Aggiunto
+
+- **Il manuale** (issue 2). Quinqu era l'unico programma del parco senza: chi non ricordava cosa facesse un comando aveva soltanto la riga di descrizione del menu. Il nuovo comando `guida` apre `Manuale_Quinqu.txt` a pagine; a fine pagina un tasto qualsiasi prosegue ed Escape chiude la lettura. Il manuale spiega a cosa serve un obiettivo e come si crea, i comandi uno per uno, la registrazione di un valore con il commento, la barra delle tappe con tutti i suoi segni, le due proiezioni e perché a volte tacciono, le statistiche, la conclusione di un progetto con il suo report, il salvataggio automatico con la copia di sicurezza, e gli aggiornamenti. Viaggia dentro l'eseguibile, quindi funziona anche dal programma compilato.
+
 ## [4.5.5] - 2026-09-24
 
 ### Corretto

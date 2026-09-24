@@ -6,6 +6,8 @@ Si dichiara un valore di partenza, un obiettivo da raggiungere e la data entro c
 
 Può seguire fino a dieci obiettivi diversi, ciascuno con la sua storia.
 
+Il manuale completo sta in `Manuale_Quinqu.txt`, e si apre anche dal programma con il comando `guida`.
+
 ## Accessibilità
 
 Quinqu è pensato per essere usato con uno screen reader. L'output si legge in modo lineare, non ci sono separatori grafici né tabelle allineate a colonne, e le righe informative sono spezzate in blocchi di circa quaranta caratteri per la lettura sul display braille.

@@ -1,0 +1,112 @@
+Manuale di Quinqu, Quanto in Quanto, versione 4.6.0
+Per seguire nel tempo un obiettivo che si possa esprimere con un numero.
+Autori: Gabriele Battaglia (IZ4APU) & ClaudIA.
+Questo manuale si apre dal programma con il comando guida. Si legge a pagine: a fine pagina un tasto qualsiasi prosegue, Escape chiude la lettura.
+
+1. Cos'è Quinqu
+Quinqu segue un valore numerico che deve andare da un punto di partenza a un obiettivo entro una certa data. Può essere il peso da perdere, i chilometri da correre in un anno, le pagine di un libro da scrivere, i risparmi da mettere da parte: qualunque cosa si misuri con un numero, che salga o che scenda.
+Un obiettivo ha un nome, una descrizione, una data di inizio, una data di fine, un valore di partenza e un valore da raggiungere. Di volta in volta si registra il valore del momento, e Quinqu dice a che punto si è rispetto all'obiettivo, a che punto si è rispetto al tempo, quale sarebbe il valore giusto per arrivare in orario, quanto manca alla prossima tappa e quando si arriverà al traguardo se si continua di questo passo.
+Si possono seguire fino a dieci obiettivi diversi, ciascuno con la sua storia, e passare dall'uno all'altro.
+Quinqu è pensato per essere usato con uno screen reader e un display braille: l'uscita si legge in modo lineare, senza tabelle né separatori grafici, e le righe informative sono spezzate in blocchi di circa quaranta caratteri.
+
+2. Come si danno i comandi
+Al prompt dei comandi si scrive il nome di un comando, oppure solo le prime lettere che bastano a distinguerlo: appena quello che si è scritto porta a un comando solo, Quinqu lo esegue senza aspettare l'invio. Il prompt suggerisce fra parentesi le lettere che si possono digitare a quel punto. Per esempio g porta subito a guida e m a menu, mentre s porta a salva, statistiche e ai tre suoni, e serve una seconda lettera.
+Il punto interrogativo ripete l'elenco dei comandi che corrispondono a quello che si è scritto. Escape annulla e torna al prompt. Il comando menu elenca tutti i comandi con la loro descrizione.
+Quando Quinqu chiede un numero o un testo, l'invio a vuoto accetta il valore proposto, che il prompt scrive dopo la parola invio. Un numero fuori dai limiti viene riportato al limite più vicino, e Quinqu lo dice.
+Quando chiede una conferma, invio vuol dire sì ed Escape vuol dire no.
+
+3. Il primo avvio e la creazione di un obiettivo
+All'avvio Quinqu saluta, dice la propria versione e cerca i suoi dati. Se non ne trova, crea subito un obiettivo nuovo. Se ne trova uno solo lo carica, se ne trova più d'uno chiede su quale lavorare.
+Per creare un obiettivo Quinqu chiede, nell'ordine:
+il nome, da cinque a venti caratteri;
+una descrizione, anche vuota;
+la data di inizio, un campo alla volta: anno, mese, giorno, ora e minuti. L'invio a vuoto su ogni campo accetta il momento attuale. Il giorno proposto non supera mai i giorni del mese scelto. Se la data di inizio è nel futuro Quinqu avvisa, perché i valori registrati da oggi risulterebbero anteriori all'inizio, e chiede se tenerla;
+la data di fine, allo stesso modo, che deve venire dopo quella di inizio;
+il valore di partenza;
+il valore da raggiungere, che deve essere diverso da quello di partenza. Se è più basso, l'obiettivo scende, come un peso da perdere, e tutto il resto del programma ne tiene conto;
+infine le tappe, descritte nel capitolo 6.
+I valori ammessi vanno da meno un milione a più un milione, con i decimali.
+
+4. Registrare un valore: il comando nuovo
+Il comando nuovo chiede il valore del momento, che si può far seguire da un commento. Si scrive il numero, uno spazio e il commento, tutto sulla stessa riga: per esempio 72,4 dopo le vacanze. Come separatore dei decimali vanno bene sia la virgola sia il punto. Il commento è facoltativo e tiene fino a settanta caratteri. L'invio a vuoto torna al prompt senza registrare niente.
+Il valore viene registrato con la data e l'ora del momento, e subito dopo Quinqu racconta come si colloca:
+se è un nuovo massimo o un nuovo minimo, e di quanto, oppure quanto dista dal minimo e dal massimo registrati;
+se con questo valore si è raggiunta una tappa, o se ne sono superate più d'una in un colpo, con un suono di festa; se invece si è tornati indietro sotto una tappa già raggiunta, lo dice con un suono che scende;
+il valore giusto di oggi, cioè quello che si dovrebbe avere adesso per arrivare all'obiettivo esattamente alla data di fine, andando a passo costante; se il valore registrato è superiore o inferiore, di quanto, e quanto pesa la differenza in percentuale sull'intero obiettivo;
+il tabellino di marcia, cioè partenza, valore attuale, valore giusto e obiettivo messi in ordine dal più basso al più alto, ciascuno con il suo nome e con la distanza dal successivo;
+le due proiezioni, descritte nel capitolo 7.
+Se con il nuovo valore l'obiettivo è raggiunto, oppure se il tempo a disposizione è finito, il progetto si conclude: vedi il capitolo 9.
+
+5. Tutti i comandi
+nuovo, registra un valore, con un commento facoltativo. Vedi il capitolo 4.
+apri, crea un obiettivo nuovo e lo rende quello in uso.
+cancella, toglie un valore dal registro. Si scrive il valore da togliere, con il punto come separatore dei decimali; se lo stesso valore compare più volte, Quinqu elenca le date e chiede quale togliere, e zero annulla. Il valore di partenza non si può cancellare.
+fine, sposta la data di fine del progetto.
+obiettivo, cambia il valore da raggiungere, che non può coincidere con quello di partenza.
+registro, elenca tutti i valori registrati, numerati, dal più vecchio al più recente, ciascuno con la differenza dal precedente, la data e il commento.
+suono_p, fa ascoltare l'andamento dei valori come una melodia, con le note che scivolano l'una nell'altra.
+suono_np, la stessa cosa con una nota ferma per ogni valore.
+suono_d, come suono_p, ma prima chiede quanti secondi deve durare, da tre a trecento.
+Nei tre suoni i valori più bassi suonano gravi e i più alti acuti, e il suono passa da sinistra a destra man mano che il tempo avanza, così a orecchio si sente se l'andamento sale, scende o ristagna. Servono almeno cinque valori registrati. Senza durata scelta, ogni valore dura un quarto di secondo, fino a un massimo di cinque minuti in tutto.
+progresso_ob, dice a che punto si è rispetto all'obiettivo: valore iniziale, attuale e obiettivo, quanto c'è da coprire in tutto, quanto si è ottenuto e quanto resta da fare, anche in percentuale e in frazione.
+progresso_t, dice a che punto si è rispetto al tempo: inizio, fine, durata in giorni, il giorno a cui si è arrivati e la percentuale di tempo trascorsa.
+confronto, mette a confronto la percentuale di tempo trascorsa con la percentuale di obiettivo raggiunta. Se le due stanno entro dieci punti l'una dall'altra la progressione è uniforme; altrimenti Quinqu dice se si sta andando troppo in fretta o troppo piano.
+tappe, mostra la situazione raccontata a parole e la barra delle tappe. Vedi il capitolo 6.
+dividi, cambia il numero delle tappe in cui è diviso l'obiettivo.
+statistiche, mostra le statistiche sui valori registrati. Vedi il capitolo 8.
+salva, salva l'archivio e lo conferma con un suono. Non è necessario usarlo: vedi il capitolo 10.
+cambia, fa scegliere un altro degli obiettivi in archivio, oppure crearne uno nuovo. L'elenco dice per ciascuno quanti valori ha e le percentuali di obiettivo e di tempo.
+elimina, cancella l'obiettivo in uso. Chiede di scrivere la parola sicuro, e qualunque altra risposta annulla.
+guida, apre questo manuale.
+menu, elenca tutti i comandi.
+reset, cancella tutti gli obiettivi e ne fa creare uno nuovo. Anche qui bisogna scrivere sicuro, ed è un'operazione che non si può annullare.
+esci, salva e chiude il programma.
+
+6. Le tappe e la barra
+Un obiettivo si divide in tappe, cioè traguardi intermedi alla stessa distanza l'uno dall'altro. Alla creazione Quinqu chiede se si preferisce dire quante tappe si vogliono, da due a cento, oppure quanto deve essere larga ciascuna. Poi elenca le tappe con i loro valori e chiede conferma. Chi preme Escape senza scegliere ottiene dieci tappe, che si possono cambiare in ogni momento con il comando dividi.
+Il comando tappe mostra tre cose, in quest'ordine.
+Prima la situazione raccontata a parole, per chi non legge sul display braille: dove si è, quanto percorso si è coperto, quanto tempo è passato, il valore giusto di adesso, di quanto si è avanti o indietro sul tempo, fra quali due tappe ci si trova, di quanto si è superata l'ultima e quanto manca alla prossima, e infine minimo, massimo e media dei valori.
+Poi la legenda, che dice in quale cella della barra sta ogni segno.
+Infine la barra, pensata per il display braille. Quinqu la stampa, riporta il cursore al suo inizio e aspetta in silenzio che si prema un tasto qualsiasi, così le dita trovano la barra sotto di sé senza doverla cercare. Premuto il tasto, il programma torna al prompt.
+La barra rappresenta il percorso dalla partenza all'obiettivo. È lunga otto celle per ogni tappa, e almeno settantacinque; va a capo ogni settantacinque caratteri, quindi con molte tappe occupa più righe.
+I segni della barra sono questi.
+< è la partenza, la prima cella del percorso.
+> è l'obiettivo, l'ultima cella.
+I numeri sono le tappe, ciascuna nella propria cella. L'ultima tappa coincide con l'obiettivo.
+O è il valore attuale, cioè l'ultimo registrato.
+T è il tempo trascorso: sta nella cella che corrisponde alla percentuale di tempo passata dall'inizio. Il valore giusto di adesso cade per definizione nella stessa cella di T, e per questo non ha un segno proprio: il suo numero lo dice il racconto.
+D è la media dei valori registrati.
+X è il massimo.
+M è il minimo.
+Le celle libere si riempiono in proporzione al percorso già coperto, con cinque gradazioni dal vuoto al pieno: il punto, i due punti, il più, l'asterisco e il cancelletto. Dalla partenza fino al valore attuale le celle sono piene, cioè cancelletti; la cella in cui cade il valore attuale ha la gradazione che corrisponde a quanto è piena; dopo, fino all'obiettivo, le celle sono vuote, cioè punti.
+Quando due o più segni cadono nella stessa cella, si scrivono uniti: prima il numero della tappa, poi il segno di partenza o di obiettivo, poi le lettere. Per esempio <M dice che il minimo coincide con la partenza, 10> che la decima tappa è l'obiettivo, 4OT che il valore attuale e il tempo stanno tutti e due sulla quarta tappa. Nessun segno resta nascosto.
+Un valore che sta sotto la partenza, oppure oltre l'obiettivo, cade fuori dal percorso, e fuori dal percorso sta anche sulla barra: prima di < o dopo >. Da quella parte la barra continua con i trattini, sulla stessa scala, fino al segno più lontano. Per esempio, con un obiettivo da 20 a 50 in dieci tappe e un valore attuale di 18, che è anche il minimo, la barra comincia così: OM----<. La legenda conta queste celle a partire da < o da >: O 5 celle prima dell'inizio. Anche il tempo può uscire dalla barra: T sta dopo > quando la data di fine è passata, e prima di < quando la data di inizio è ancora da venire.
+Fuori dal percorso la barra si allunga al massimo di settantacinque celle per parte. Un segno più lontano si ferma sull'ultima di quelle celle, e la legenda lo dice fuori scala.
+
+7. Le proiezioni
+Dopo ogni valore registrato, e in fondo alle statistiche, Quinqu fa due previsioni di quando si arriverà all'obiettivo se si continua con lo stesso passo. La prima, la storica, tiene conto di tutti i valori; la seconda, la recente, solo degli ultimi cinque, e dice quindi come si sta andando ultimamente. Ciascuna dà la data prevista del traguardo e la velocità, cioè di quanto cambia il valore in media ogni giorno.
+Una proiezione può non dare una data per tre motivi, e lo dice.
+Obiettivo già raggiunto, quando il valore è già arrivato.
+Di questo passo non si arriva, quando i valori vanno nella direzione sbagliata, sono fermi, oppure procedono così piano che il traguardo cadrebbe fra più di cento anni.
+Dati insufficienti o troppo ravvicinati, quando non ci sono almeno due valori registrati a un giorno di distanza l'uno dall'altro. Con due valori a un minuto di distanza la velocità risulterebbe enorme e la previsione assurda, quindi Quinqu preferisce tacere.
+
+8. Le statistiche
+Il comando statistiche richiede almeno quattro valori registrati. Mostra il numero dei valori; il massimo e il minimo, con quante volte e in quali date sono stati raggiunti; la media, le tre mediane, la moda, la deviazione standard e la varianza; la suddivisione in quattro quartili, prima ordinando i valori per grandezza e poi per data, con minimo, media e massimo di ciascun quarto; la variazione totale dal primo all'ultimo valore; quanti passaggi da un valore al successivo sono stati in aumento, in calo o stabili, e i picchi di aumento e di calo con la loro data; la variazione media per passo e ogni quanto tempo, in media, si registra un valore; le due proiezioni; e infine quanto bisognerebbe guadagnare o perdere al giorno, da adesso, per arrivare all'obiettivo in tempo.
+
+9. La conclusione di un progetto e il report
+Un progetto si conclude quando l'obiettivo è raggiunto oppure quando il tempo a disposizione è finito. Quinqu se ne accorge quando si registra un valore, e anche all'avvio, quando carica l'obiettivo.
+A quel punto scrive un report, cioè un file di testo accanto al programma che si chiama Quinqu seguito da un trattino e dal nome del progetto, per esempio Quinqu-Peso Estate.txt. Contiene nome, descrizione, date, valore iniziale e obiettivo, l'esito, il registro completo dei valori e tutte le statistiche. I caratteri che Windows non ammette nei nomi di file vengono sostituiti, e se esiste già un report con lo stesso nome il nuovo prende un numero fra parentesi: un report vecchio non viene mai sovrascritto.
+Solo dopo che il report è stato scritto davvero, il progetto esce dall'archivio. Se il report non si riesce a scrivere, il progetto resta dov'è.
+Se era l'ultimo obiettivo, Quinqu chiede se crearne uno nuovo; se ne resta uno solo passa a quello, altrimenti chiede su quale continuare.
+
+10. Dove stanno i dati e come si salvano
+Tutti gli obiettivi stanno in un solo file, quinqu.json, nella stessa cartella del programma.
+Non serve salvare a mano: Quinqu salva da solo e in silenzio dopo ogni comando che cambia qualcosa, e salva anche quando si esce, sia con il comando esci sia con Control C.
+Ogni salvataggio avviene prima su un file temporaneo, che poi prende il posto di quello vecchio in un colpo solo: un'interruzione a metà, per esempio una mancanza di corrente, non può lasciare l'archivio troncato. Prima di ogni salvataggio la versione precedente viene copiata in quinqu.json.bak, che è quindi sempre la penultima.
+Se all'avvio l'archivio non si riesce a leggere, Quinqu lo dice e si chiude senza toccare niente: il file resta com'è e si può provare a ripararlo, oppure a sostituirlo con la copia bak. Se invece è illeggibile uno solo degli obiettivi, Quinqu dice quale, avvisa che al primo salvataggio andrà perso e chiede se proseguire: chi vuole conservarlo può fermarsi e fare prima una copia di quinqu.json.
+Chi usava una versione molto vecchia di Quinqu aveva i dati in un file quinqu.db: al primo avvio viene convertito da solo, e il vecchio file resta accanto, rinominato quinqu.db.bak.
+
+11. Aggiornamenti
+All'avvio il programma controlla su GitHub se è uscita una versione nuova. Se c'è, mostra le novità e chiede se installarla; rispondendo sì, Quinqu si chiude, si aggiorna e riparte da solo. I dati non vengono toccati. Senza connessione il controllo non riesce e il programma prosegue normalmente.
+Il controllo avviene soltanto con il programma compilato, non quando lo si lancia dal codice sorgente.
+Il programma non è firmato digitalmente, quindi al primo avvio Windows può mostrare l'avviso di SmartScreen, Windows ha protetto il PC, perché non riconosce l'app. Per avviarla lo stesso si sceglie Ulteriori informazioni e poi Esegui comunque.

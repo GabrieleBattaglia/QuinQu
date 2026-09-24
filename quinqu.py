@@ -19,14 +19,18 @@ import warnings
 from fractions import Fraction as frac
 
 import numpy as np
-from GBUtils import Acusticator, dgt, enter_escape, gestisci_aggiornamento, key, menu, sonify
+from GBUtils import Acusticator, dgt, enter_escape, gestisci_aggiornamento, key, manuale, menu, sonify
 
 APP_NAME = "Quinqu"
-APP_VERSION = "4.5.5"
+APP_VERSION = "4.6.0"
 RELEASE_DATE = "2026-09-24"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
+# Il manuale e' una risorsa in sola lettura: da eseguibile viaggia dentro il
+# pacchetto, dichiarato nei datas di quinqu.spec, e manuale di GBUtils lo
+# cerca da sola fra le risorse di PyInstaller prima che accanto al sorgente.
+NOME_MANUALE = "Manuale_Quinqu.txt"
 API_RELEASE = "https://api.github.com/repos/GabrieleBattaglia/QuinQu/releases/latest"
 # Larghezza dei blocchi in cui si spezzano le righe informative, per la
 # lettura sul display braille.
@@ -113,6 +117,7 @@ main_menu = {
     "salva": "Salva il registro",
     "cambia": "Cambia obiettivo gestito",
     "elimina": "Elimina l'obiettivo corrente",
+    "guida": "Leggi il manuale",
     "menu": "Mostra il menù",
     "reset": "Elimina definitivamente tutti i dati (RESET GLOBALE)",
     "esci": "Esci dall'App",
@@ -890,6 +895,17 @@ def VMenu():
     menu(d=main_menu, show_only=True)
 
 
+def MostraManuale():
+    """Apre il manuale con il pager di GBUtils, a pagine, con Escape per uscire."""
+    RiproduciEffetto("lista")
+    try:
+        manuale(NOME_MANUALE, nome="Manuale")
+    except OSError as e:
+        RiproduciEffetto("rifiuto")
+        print("Il manuale non si apre.")
+        dillo(str(e))
+
+
 def SelezionaProgetto(progetti):
     """Fa scegliere l'obiettivo su cui lavorare e ne restituisce l'identificativo."""
     opzioni = {}
@@ -1537,6 +1553,8 @@ def CicloComandi(progetti, id_corrente):
         attesa = attesa.lower()
         if attesa == "menu":
             VMenu()
+        elif attesa == "guida":
+            MostraManuale()
         elif attesa == "esci":
             RiproduciEffetto("quinqu_shutdown")
             Salva(progetti)

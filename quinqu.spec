@@ -5,17 +5,20 @@
 # compilazione riesce anche su una macchina dove i repository stanno altrove.
 # La collezione dei suoni condivisa va portata dentro il pacchetto, altrimenti
 # Acusticator non la trova e l'eseguibile resta muto: tutti i suoni di Quinqu
-# vengono da li'.
+# vengono da li'. Anche il manuale viaggia dentro l'eseguibile: la voce guida
+# del menu lo cerca fra le risorse del pacchetto, e senza questa riga da
+# sorgente lo troverebbe e dall'eseguibile no.
 import os
 
 GBUTILS_DIR = os.path.abspath(os.path.join(SPECPATH, '..', 'GBUtils'))
 COLLEZIONE = os.path.join(GBUTILS_DIR, 'Acu_Collection.json')
+MANUALE = os.path.join(SPECPATH, 'Manuale_Quinqu.txt')
 
 a = Analysis(
     ['quinqu.py'],
     pathex=[GBUTILS_DIR],
     binaries=[],
-    datas=[(COLLEZIONE, '.')],
+    datas=[(COLLEZIONE, '.'), (MANUALE, '.')],
     # requests e compagni servono al controllo aggiornamenti di GBUtils:
     # senza, l'eseguibile parte ma non riesce a contattare GitHub.
     # scipy.signal lo importa Acusticator dentro le funzioni, quindi
