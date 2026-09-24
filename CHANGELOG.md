@@ -3,6 +3,12 @@
 Tutti i cambiamenti e le novità introdotte nelle versioni di Quinqu.
 Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resoconto sta nella cronologia dei commit e nelle release pubblicate su GitHub.
 
+## [4.5.2] - 2026-09-24
+
+### Modificato
+
+- **Il giorno proposto nella data non è più una difesa da un difetto di GBUtils** (issue 3). Nella 4.5.0 Quinqu limitava da sé il giorno proposto al massimo del mese, perché `dgt` non lo faceva e il 31 di marzo, scegliendo febbraio, faceva cadere l'applicazione. Dalla versione 2.0.0 `dgt` lo fa da sola. Il limite resta, ma per un'altra ragione: il prompt deve scrivere il giorno che l'invio darà davvero, 28 e non 31. Per chi usa il programma non cambia niente.
+
 ## [4.5.1] - 2026-09-24
 
 ### Corretto

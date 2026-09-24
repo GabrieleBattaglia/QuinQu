@@ -22,7 +22,7 @@ import numpy as np
 from GBUtils import Acusticator, dgt, enter_escape, gestisci_aggiornamento, key, menu, sonify
 
 APP_NAME = "Quinqu"
-APP_VERSION = "4.5.1"
+APP_VERSION = "4.5.2"
 RELEASE_DATE = "2026-09-24"
 AUTORE = "Gabriele"
 RECORDNAME = "quinqu.json"
@@ -364,9 +364,10 @@ def DigitaData():
     anno = dgt(prompt=f"Anno? invio={oggi.year}> ", kind="i", imin=1970, imax=2500, default=oggi.year)
     mese = dgt(prompt=f"Mese? invio={oggi.month}> ", kind="i", imin=1, imax=12, default=oggi.month)
     maxgiorno = calendar.monthrange(anno, mese)[1]
-    # Il valore predefinito va limitato qui: dgt, quando si preme invio, lo
-    # restituisce senza applicare imin e imax, e il 31 di un mese corto
-    # farebbe fallire la costruzione della data.
+    # Dalla V2.0.0 dgt riporta da sola il predefinito dentro imin e imax, e il
+    # 31 di un mese corto non fa piu' fallire la data. Il predefinito si
+    # limita qui soltanto perche' il prompt lo dica giusto: il 31 di marzo,
+    # scegliendo febbraio, deve scrivere invio=28 e non invio=31.
     giorno_default = min(oggi.day, maxgiorno)
     giorno = dgt(prompt=f"Giorno? invio={giorno_default}, max={maxgiorno}> ", kind="i", imin=1, imax=maxgiorno, default=giorno_default)
     ora = dgt(prompt=f"A che ora? invio={oggi.hour}> ", kind="i", imin=0, imax=23, default=oggi.hour)
