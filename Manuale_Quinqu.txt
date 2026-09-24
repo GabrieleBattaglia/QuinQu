@@ -1,4 +1,4 @@
-Manuale di Quinqu, Quanto in Quanto, versione 4.6.0
+Manuale di Quinqu, Quanto in Quanto, versione 4.7.0
 Per seguire nel tempo un obiettivo che si possa esprimere con un numero.
 Autori: Gabriele Battaglia (IZ4APU) & ClaudIA.
 Questo manuale si apre dal programma con il comando guida. Si legge a pagine: a fine pagina un tasto qualsiasi prosegue, Escape chiude la lettura.
@@ -60,7 +60,7 @@ elimina, cancella l'obiettivo in uso. Chiede di scrivere la parola sicuro, e qua
 guida, apre questo manuale.
 menu, elenca tutti i comandi.
 reset, cancella tutti gli obiettivi e ne fa creare uno nuovo. Anche qui bisogna scrivere sicuro, ed è un'operazione che non si può annullare.
-esci, salva e chiude il programma.
+esci, salva e chiude il programma. Una volta ogni tanto, uscendo, Quinqu ricorda che chi lo trova utile può offrire un caffè a chi lo ha scritto, e dice come.
 
 6. Le tappe e la barra
 Un obiettivo si divide in tappe, cioè traguardi intermedi alla stessa distanza l'uno dall'altro. Alla creazione Quinqu chiede se si preferisce dire quante tappe si vogliono, da due a cento, oppure quanto deve essere larga ciascuna. Poi elenca le tappe con i loro valori e chiede conferma. Chi preme Escape senza scegliere ottiene dieci tappe, che si possono cambiare in ogni momento con il comando dividi.

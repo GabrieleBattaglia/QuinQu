@@ -3,6 +3,12 @@
 Tutti i cambiamenti e le novità introdotte nelle versioni di Quinqu.
 Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resoconto sta nella cronologia dei commit e nelle release pubblicate su GitHub.
 
+## [4.7.0] - 2026-09-24
+
+### Aggiunto
+
+- **L'invito a offrire un caffè** (issue 2). Uscendo dal programma, una volta su cinque, Quinqu ricorda che chi lo trova utile può sostenere chi lo ha scritto, e dice come. Compare solo all'uscita voluta, con il comando `esci` o rinunciando a un nuovo obiettivo dopo aver concluso l'ultimo, e non dopo un Control C. È lo stesso invito, e con la stessa frequenza, degli altri programmi del parco. Il manuale lo ricorda alla voce `esci`.
+
 ## [4.6.0] - 2026-09-24
 
 ### Aggiunto

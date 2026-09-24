@@ -19,12 +19,16 @@ import warnings
 from fractions import Fraction as frac
 
 import numpy as np
-from GBUtils import Acusticator, dgt, enter_escape, gestisci_aggiornamento, key, manuale, menu, sonify
+from GBUtils import Acusticator, Donazione, dgt, enter_escape, gestisci_aggiornamento, key, manuale, menu, sonify
 
 APP_NAME = "Quinqu"
-APP_VERSION = "4.6.0"
+APP_VERSION = "4.7.0"
 RELEASE_DATE = "2026-09-24"
 AUTORE = "Gabriele"
+# Quinqu parla soltanto italiano. Senza lingua esplicita Donazione la
+# ricaverebbe dal sistema, e su un Windows inglese l'invito arriverebbe in
+# inglese in mezzo a un programma tutto in italiano.
+LINGUA = "it"
 RECORDNAME = "quinqu.json"
 OLD_RECORDNAME = "quinqu.db"
 # Il manuale e' una risorsa in sola lettura: da eseguibile viaggia dentro il
@@ -1719,6 +1723,7 @@ def main():
     if VPObiettivo(stato) >= 100 or VPTempo(stato) >= 100:
         id_corrente, prosegui = GestisciConclusione(progetti, id_corrente)
         if not prosegui:
+            Donazione(lang=LINGUA)
             return
     try:
         CicloComandi(progetti, id_corrente)
@@ -1727,6 +1732,10 @@ def main():
         print("Interruzione da tastiera.")
         if Salva(progetti, annuncia=False):
             print("Archivio salvato prima di uscire.")
+    else:
+        # L'invito a offrire un caffe' compare una volta su cinque, e solo
+        # all'uscita voluta: non dopo un Control C ne' dopo un errore.
+        Donazione(lang=LINGUA)
 
 
 if __name__ == "__main__":
