@@ -3,6 +3,12 @@
 Tutti i cambiamenti e le novità introdotte nelle versioni di Quinqu.
 Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resoconto sta nella cronologia dei commit e nelle release pubblicate su GitHub.
 
+## [4.7.1] - 2026-09-24
+
+### Corretto
+
+- **Un nuovo record tiene conto della direzione dell'obiettivo.** Registrando un valore oltre il massimo, Quinqu diceva sempre nuovo record e suonava la vittoria, e sotto il minimo diceva ancora nuovo record ma suonava il rifiuto. Con un obiettivo che scende, come un peso da perdere, era tutto al contrario: salire festeggiava, scendere veniva respinto. Ora il nuovo record, con il suono di vittoria, è l'estremo dalla parte dell'obiettivo; quello dalla parte opposta si annuncia con mai così indietro e con il suono di rifiuto.
+
 ## [4.7.0] - 2026-09-24
 
 ### Aggiunto

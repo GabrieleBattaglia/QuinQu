@@ -1,4 +1,4 @@
-Manuale di Quinqu, Quanto in Quanto, versione 4.7.0
+Manuale di Quinqu, Quanto in Quanto, versione 4.7.1
 Per seguire nel tempo un obiettivo che si possa esprimere con un numero.
 Autori: Gabriele Battaglia (IZ4APU) & ClaudIA.
 Questo manuale si apre dal programma con il comando guida. Si legge a pagine: a fine pagina un tasto qualsiasi prosegue, Escape chiude la lettura.
@@ -30,7 +30,7 @@ I valori ammessi vanno da meno un milione a più un milione, con i decimali.
 4. Registrare un valore: il comando nuovo
 Il comando nuovo chiede il valore del momento, che si può far seguire da un commento. Si scrive il numero, uno spazio e il commento, tutto sulla stessa riga: per esempio 72,4 dopo le vacanze. Come separatore dei decimali vanno bene sia la virgola sia il punto. Il commento è facoltativo e tiene fino a settanta caratteri. L'invio a vuoto torna al prompt senza registrare niente.
 Il valore viene registrato con la data e l'ora del momento, e subito dopo Quinqu racconta come si colloca:
-se è un nuovo massimo o un nuovo minimo, e di quanto, oppure quanto dista dal minimo e dal massimo registrati;
+se supera il massimo o scende sotto il minimo registrati, e di quanto, oppure quanto dista dall'uno e dall'altro. Un nuovo estremo dalla parte dell'obiettivo è un nuovo record, e suona come una vittoria; uno dalla parte opposta vuol dire che non si era mai stati così indietro, e suona come un rifiuto. Con un obiettivo che scende, come un peso da perdere, il record è quindi il nuovo minimo;
 se con questo valore si è raggiunta una tappa, o se ne sono superate più d'una in un colpo, con un suono di festa; se invece si è tornati indietro sotto una tappa già raggiunta, lo dice con un suono che scende;
 il valore giusto di oggi, cioè quello che si dovrebbe avere adesso per arrivare all'obiettivo esattamente alla data di fine, andando a passo costante; se il valore registrato è superiore o inferiore, di quanto, e quanto pesa la differenza in percentuale sull'intero obiettivo;
 il tabellino di marcia, cioè partenza, valore attuale, valore giusto e obiettivo messi in ordine dal più basso al più alto, ciascuno con il suo nome e con la distanza dal successivo;

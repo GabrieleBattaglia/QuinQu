@@ -22,7 +22,7 @@ import numpy as np
 from GBUtils import Acusticator, Donazione, dgt, enter_escape, gestisci_aggiornamento, key, manuale, menu, sonify
 
 APP_NAME = "Quinqu"
-APP_VERSION = "4.7.0"
+APP_VERSION = "4.7.1"
 RELEASE_DATE = "2026-09-24"
 AUTORE = "Gabriele"
 # Quinqu parla soltanto italiano. Senza lingua esplicita Donazione la
@@ -830,16 +830,24 @@ def Nuovodato(stato):
     if listavalori:
         massimo = max(listavalori)
         minimo = min(listavalori)
-        if valore > massimo:
-            RiproduciEffetto("vittoria", base_vol=0.2)
-            print(f"Nuovo record: {valore:+.2f}")
-            print(f"Supera il massimo {massimo:+.2f}")
-            print(f"di {valore - massimo:.2f}.")
-        elif valore < minimo:
-            RiproduciEffetto("rifiutato")
-            print(f"Nuovo record: {valore:+.2f}")
-            print(f"Scende sotto il minimo {minimo:+.2f}")
-            print(f"di {minimo - valore:.2f}.")
+        if valore > massimo or valore < minimo:
+            sopra = valore > massimo
+            # Un nuovo estremo e' un record soltanto dalla parte
+            # dell'obiettivo. Fino alla 4.7.0 il nuovo massimo suonava sempre
+            # vittoria e il nuovo minimo sempre rifiuto: con un peso da
+            # perdere, salire festeggiava e scendere veniva respinto.
+            if sopra == (stato["obiettivo"] >= ValoreIniziale(stato)):
+                RiproduciEffetto("vittoria", base_vol=0.2)
+                print(f"Nuovo record: {valore:+.2f}")
+            else:
+                RiproduciEffetto("rifiutato")
+                print(f"Mai così indietro: {valore:+.2f}")
+            if sopra:
+                print(f"Supera il massimo {massimo:+.2f}")
+                print(f"di {valore - massimo:.2f}.")
+            else:
+                print(f"Scende sotto il minimo {minimo:+.2f}")
+                print(f"di {minimo - valore:.2f}.")
         else:
             RiproduciEffetto("controllo_ok")
             print(f"Valore {valore:+.2f}, nell'intervallo noto.")
