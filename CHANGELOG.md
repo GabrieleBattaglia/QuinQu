@@ -3,6 +3,12 @@
 Tutti i cambiamenti e le novità introdotte nelle versioni di Quinqu.
 Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resoconto sta nella cronologia dei commit e nelle release pubblicate su GitHub.
 
+## [4.7.3] - 2026-11-13
+
+### Corretto
+
+- **Il manuale dice come si rifiuta un valore fuori dai limiti.** Dalla V3.0.0 di dgt in GBUtils, issue 45, un numero fuori dai limiti non viene più riportato al limite più vicino: si rifiuta, Quinqu scrive i due limiti in cifre e ripete la domanda. Lo stesso per un testo troppo lungo, che prima veniva tagliato. Il manuale prometteva ancora il comportamento di prima.
+
 ## [4.7.2] - 2026-09-24
 
 Pubblicata su GitHub il 2026-09-24 come release `v4.7.2`, con il solo archivio `quinqu.zip` in allegato, e con lei tutti i blocchi dalla 4.5.1 in poi. Verificato che l'auto updater la riconosca e ne riceva le note. Issue 2, 3, 4 e 5 chiuse dai commit che le risolvono.

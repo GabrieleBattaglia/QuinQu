@@ -22,8 +22,8 @@ import numpy as np
 from GBUtils import Acusticator, Donazione, dgt, enter_escape, gestisci_aggiornamento, key, manuale, menu, sonify
 
 APP_NAME = "Quinqu"
-APP_VERSION = "4.7.2"
-RELEASE_DATE = "2026-09-24"
+APP_VERSION = "4.7.3"
+RELEASE_DATE = "2026-11-13"
 AUTORE = "Gabriele"
 # Quinqu parla soltanto italiano. Senza lingua esplicita Donazione la
 # ricaverebbe dal sistema, e su un Windows inglese l'invito arriverebbe in

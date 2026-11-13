@@ -1,4 +1,4 @@
-Manuale di Quinqu, Quanto in Quanto, versione 4.7.2
+Manuale di Quinqu, Quanto in Quanto, versione 4.7.3
 Per seguire nel tempo un obiettivo che si possa esprimere con un numero.
 Autori: Gabriele Battaglia (IZ4APU) & ClaudIA.
 Questo manuale si apre dal programma con il comando guida. Si legge a pagine: a fine pagina un tasto qualsiasi prosegue, Escape chiude la lettura.
@@ -12,7 +12,7 @@ Quinqu è pensato per essere usato con uno screen reader e un display braille: l
 2. Come si danno i comandi
 Al prompt dei comandi si scrive il nome di un comando, oppure solo le prime lettere che bastano a distinguerlo: appena quello che si è scritto porta a un comando solo, Quinqu lo esegue senza aspettare l'invio. Il prompt suggerisce fra parentesi le lettere che si possono digitare a quel punto. Per esempio g porta subito a guida e m a menu, mentre s porta a salva, statistiche e ai tre suoni, e serve una seconda lettera.
 Il punto interrogativo ripete l'elenco dei comandi che corrispondono a quello che si è scritto. Escape annulla e torna al prompt. Il comando menu elenca tutti i comandi con la loro descrizione.
-Quando Quinqu chiede un numero o un testo, l'invio a vuoto accetta il valore proposto, che il prompt scrive dopo la parola invio. Un numero fuori dai limiti viene riportato al limite più vicino, e Quinqu lo dice.
+Quando Quinqu chiede un numero o un testo, l'invio a vuoto accetta il valore proposto, che il prompt scrive dopo la parola invio. Un numero fuori dai limiti non si accetta: Quinqu scrive i due limiti in cifre, per esempio 1 - 12 per il mese, e ripete la domanda. Lo stesso per un testo troppo lungo o troppo corto: Quinqu scrive quanti caratteri ha e quanti ne sono ammessi, per esempio 25 / 20 per un nome di venticinque caratteri, e ripete la domanda.
 Quando chiede una conferma, invio vuol dire sì ed Escape vuol dire no.
 
 3. Il primo avvio e la creazione di un obiettivo
