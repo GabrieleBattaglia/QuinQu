@@ -3,11 +3,17 @@
 Tutti i cambiamenti e le novità introdotte nelle versioni di Quinqu.
 Il changelog nasce con la versione 4.5.0. Per le versioni precedenti il resoconto sta nella cronologia dei commit e nelle release pubblicate su GitHub.
 
+## [4.7.4] - 2026-11-13
+
+### Corretto
+
+- **Il manuale dice come si comporta il comando nuovo.** La 4.7.3 aveva esteso a tutte le domande il rifiuto di dgt, con la domanda che si ripete. Il comando nuovo però legge la riga da sé: un valore fuori dai limiti, o che non è un numero, non si registra, Quinqu dice perché e torna al prompt dei comandi; del commento si tengono i primi settanta caratteri, e soltanto una riga di più di novanta caratteri fa ripetere la domanda. Ora il capitolo 4 lo dice, e il capitolo 2 rimanda lì.
+
 ## [4.7.3] - 2026-11-13
 
 ### Corretto
 
-- **Il manuale dice come si rifiuta un valore fuori dai limiti.** Dalla V3.0.0 di dgt in GBUtils, issue 45, un numero fuori dai limiti non viene più riportato al limite più vicino: si rifiuta, Quinqu scrive i due limiti in cifre e ripete la domanda. Lo stesso per un testo troppo lungo, che prima veniva tagliato. Il manuale prometteva ancora il comportamento di prima.
+- **Il manuale dice come si rifiuta un valore fuori dai limiti.** Dalla V3.0.0 di dgt in GBUtils, issue 45, un numero fuori dai limiti non viene più riportato al limite più vicino: si rifiuta, Quinqu scrive i due limiti in cifre e ripete la domanda. Lo stesso, nelle domande che Quinqu fa con dgt, per un testo troppo lungo, che prima veniva tagliato. Il manuale prometteva ancora il comportamento di prima.
 
 ## [4.7.2] - 2026-09-24
 
